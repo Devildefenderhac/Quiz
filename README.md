@@ -33,11 +33,13 @@ Ans: C
 
 ---
 
-### 2. 🔀 Randomized Non-Repeating Question Distribution
+### 2. 🔀 Randomized Non-Repeating Question Distribution & Auto-Persistence
 - **Zero Duplicates Across Sets**: Upload a pool of questions (e.g. 50 questions) and allocate custom amounts to Set A, Set B, Set C, and Final (e.g. 10 each) with 100% mathematical guarantee of no overlapping questions across sets.
+- **💾 Automatic Storage (`localStorage`)**: All uploaded and configured questions are automatically stored in browser storage and persist across page refreshes.
+- **🗑️ Automatic Deletion of Old Data**: Adding new questions cleanly wipes and replaces the old questions in the target sets so previous questions never mix with new uploads.
+- **🔄 Reset to Defaults**: Dedicated `🗑️ RESET ALL TO DEFAULT QUESTIONS` button in the Operator Panel to wipe custom storage and restore starter questions at any time.
 - **Fisher-Yates Randomization**: Questions are randomly shuffled so sets never receive sequential or predictable batches.
 - **🔀 Toggleable Randomizer**: Enable or disable random shuffle directly within the Import Wizard.
-- **🔀 Live On-Demand Reshuffle**: Live "SHUFFLE ORDER" button in the Quiz action bar to reshuffle question order in any set at any time.
 - **⚖️ Divide Equally**: Automatically distributes question pools evenly across Set A, Set B, Set C & Final Round without duplicates.
 - **★ Copy to All Sets**: Loads the entire pool into all four sets simultaneously with independent random ordering.
 - **🎯 Assign to Specific Set**: Instantly loads questions into **Set A**, **Set B**, **Set C**, or the **Final Round**.
