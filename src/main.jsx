@@ -1,14 +1,16 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import * as pdfjsLib from 'pdfjs-dist';
-import pdfWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import './styles.css';
-
-// Set up PDF.js worker for client-side extraction (works offline, locally & on GitHub Pages)
-pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
 
 async function extractTextFromPdf(file) {
   try {
+    const [pdfjsLib, { default: pdfWorker }] = await Promise.all([
+      import('pdfjs-dist'),
+      import('pdfjs-dist/build/pdf.worker.min.mjs?url')
+    ]);
+    if (pdfjsLib?.GlobalWorkerOptions) {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
+    }
     const arrayBuffer = await file.arrayBuffer();
     const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) });
     const pdf = await loadingTask.promise;
@@ -1077,8 +1079,39 @@ function UploadZone({ label, icon, onFile, fileInfo, onClear }) {
   );
 }
 
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error, errorInfo) {
+    console.error('Quiz App Error:', error, errorInfo);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: 40, color: '#fff', background: '#0a0d18', minHeight: '100vh', fontFamily: 'sans-serif', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+          <h2>Something went wrong while rendering the Quiz.</h2>
+          <p style={{ color: '#f87171', maxWidth: 600, margin: '15px 0' }}>{this.state.error?.message || String(this.state.error)}</p>
+          <button onClick={() => { localStorage.clear(); window.location.reload(); }} style={{ padding: '12px 24px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 'bold' }}>
+            Reset Storage &amp; Reload
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 const rootElement = document.getElementById('root');
 if (rootElement) {
-  createRoot(rootElement).render(<App />);
+  createRoot(rootElement).render(
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
+  );
 }
 
