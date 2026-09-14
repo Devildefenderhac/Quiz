@@ -180,13 +180,34 @@ function parseQuizText(text) { const lines=text.split(/\r?\n/); const pipes=line
 
 function App() {
   const [rounds, setRounds] = useState(getStoredRounds); const [round, setRound] = useState(null);
-  const [indexes, setIndexes] = useState({ A: 0, B: 0, C: 0, FINAL: 0 }); const [seconds, setSeconds] = useState(60); const [running, setRunning] = useState(false); const [selected, setSelected] = useState(null); const [revealed, setRevealed] = useState(false); const [questionVisible, setQuestionVisible] = useState(false); const [autoNextCountdown, setAutoNextCountdown] = useState(null); const [sound, setSound] = useState(true); const [panel, setPanel] = useState(false); const [target, setTarget] = useState('A'); const [edit, setEdit] = useState(blank()); const [pendingImport, setPendingImport] = useState(null); const [counts, setCounts] = useState({ A: '', B: '', C: '', FINAL: '' });
+  const [indexes, setIndexes] = useState({ A: 0, B: 0, C: 0, FINAL: 0 }); const [seconds, setSeconds] = useState(60); const [running, setRunning] = useState(false); const [selected, setSelected] = useState(null); const [revealed, setRevealed] = useState(false); const [questionVisible, setQuestionVisible] = useState(false); const [autoNextCountdown, setAutoNextCountdown] = useState(null); const [completed, setCompleted] = useState(false); const [sound, setSound] = useState(true); const [panel, setPanel] = useState(false); const [target, setTarget] = useState('A'); const [edit, setEdit] = useState(blank()); const [pendingImport, setPendingImport] = useState(null); const [counts, setCounts] = useState({ A: '', B: '', C: '', FINAL: '' });
   const [uploadMode, setUploadMode] = useState('single'); const [perSetData, setPerSetData] = useState({ A: null, B: null, C: null, FINAL: null });
   const questions = round ? rounds[round] : []; const index = round ? indexes[round] : 0; const current = questions[index] || blank();
   const reset = () => { setSeconds(60); setRunning(false); setSelected(null); setRevealed(false); setQuestionVisible(false); setAutoNextCountdown(null); stopAllSounds(); };
-  const openRound = key => { setRound(key); setTarget(key); setPanel(false); reset(); };
+  const openRound = key => { setRound(key); setTarget(key); setPanel(false); setCompleted(false); reset(); };
   const showQuestion = () => { setQuestionVisible(true); setSeconds(60); setRunning(true); setSelected(null); setRevealed(false); setAutoNextCountdown(null); stopAllSounds(); if (sound) playQuestionSound(); };
-  const nextQuestion = () => { if (!questions.length) return; stopAllSounds(); setIndexes(all => ({ ...all, [round]: (all[round] + 1) % questions.length })); reset(); };
+  const nextQuestion = () => {
+    if (!questions.length) return;
+    stopAllSounds();
+    if (index >= questions.length - 1) {
+      setCompleted(true);
+      if (sound) playCompleteSound();
+    } else {
+      setIndexes(all => ({ ...all, [round]: all[round] + 1 }));
+      reset();
+    }
+  };
+  const replayCurrentSet = () => {
+    if (!round) return;
+    stopAllSounds();
+    setIndexes(all => ({ ...all, [round]: 0 }));
+    setCompleted(false);
+    reset();
+  };
+  const roundOrder = ['A', 'B', 'C', 'FINAL'];
+  const curPos = round ? roundOrder.indexOf(round) : -1;
+  const nextRound = curPos >= 0 && curPos < roundOrder.length - 1 ? roundOrder[curPos + 1] : null;
+
   const selectOption = n => {
     if (!revealed) {
       setSelected(n);
@@ -199,9 +220,6 @@ function App() {
         if (isCorrect) playTrueSound();
         else playWrongSound();
       }
-      if (index === questions.length - 1) {
-        setTimeout(() => { if (sound) playCompleteSound(); }, 900);
-      }
       setAutoNextCountdown(10);
     }
   };
@@ -211,6 +229,7 @@ function App() {
       try { localStorage.removeItem(STORAGE_KEY); } catch {}
       setRounds(initialRounds);
       setIndexes({ A: 0, B: 0, C: 0, FINAL: 0 });
+      setCompleted(false);
       reset();
       alert('Questions reset to default starter questions.');
     }
@@ -222,12 +241,12 @@ function App() {
   }, [rounds]);
   useEffect(() => { if (!running || revealed || seconds <= 0) return; const id = setInterval(() => setSeconds(s => s - 1), 1000); return () => clearInterval(id); }, [running, revealed, seconds]);
   useEffect(() => {
-    if (running && questionVisible && !revealed && seconds > 0 && sound) {
+    if (running && questionVisible && !revealed && seconds > 0 && sound && !completed) {
       playTimerSound();
     } else {
       pauseTimerSound();
     }
-  }, [running, questionVisible, revealed, seconds, sound]);
+  }, [running, questionVisible, revealed, seconds, sound, completed]);
   useEffect(() => {
     if (seconds === 0 && questionVisible && !revealed) {
       setRunning(false);
@@ -235,12 +254,14 @@ function App() {
       stopQuestionSound();
       stopTimerSound();
       if (sound) playWrongSound();
-      if (index === questions.length - 1) {
-        setTimeout(() => { if (sound) playCompleteSound(); }, 900);
-      }
       setAutoNextCountdown(10);
     }
-  }, [seconds, sound, questionVisible, revealed, index, questions.length]);
+  }, [seconds, sound, questionVisible, revealed]);
+  useEffect(() => {
+    if (completed && sound) {
+      playCompleteSound();
+    }
+  }, [completed, sound]);
   useEffect(() => { if (autoNextCountdown === null) return; if (autoNextCountdown <= 0) { nextQuestion(); return; } const id = setTimeout(() => { setAutoNextCountdown(c => (c !== null ? c - 1 : null)); }, 1000); return () => clearTimeout(id); }, [autoNextCountdown]);
 
   const outcome = useMemo(() => { if (!revealed) return ''; if (selected === null) return 'timeup'; return selected === current.answer ? 'correct' : 'wrong'; }, [revealed, selected, current.answer]);
@@ -251,17 +272,158 @@ function App() {
   const finishImport = (mode, chosenSet, doShuffle = true) => { const list = pendingImport; if (!list) return; const pool = doShuffle ? shuffle(list) : list; let split={A:[],B:[],C:[],FINAL:[]}; if(mode==='equal') pool.forEach((item,i)=>split[['A','B','C','FINAL'][i%4]].push(item)); if(mode==='all_sets') split={A:doShuffle?shuffle(list):[...list],B:doShuffle?shuffle(list):[...list],C:doShuffle?shuffle(list):[...list],FINAL:doShuffle?shuffle(list):[...list]}; if(mode==='selected') { const s=chosenSet||target||'A'; split={...rounds,[s]:pool}; } if(mode==='custom') { const numbers=Object.fromEntries(Object.entries(counts).map(([key,value])=>[key,Number(value||0)])); const total=Object.values(numbers).reduce((a,b)=>a+b,0); if(Object.values(numbers).some(x=>!Number.isInteger(x)||x<0)||total>list.length||total===0)return alert(`Enter valid counts up to ${list.length} questions.`); let at=0; Object.keys(split).forEach(key=>{split[key]=pool.slice(at,at+numbers[key]);at+=numbers[key]}); } setRounds(split); setIndexes({A:0,B:0,C:0,FINAL:0}); if(round)reset(); setPendingImport(null); };
   const importPerSetPdf = async (file, setName) => { if (!file) return; const fd = new FormData(); fd.append('file', file); try { const response = await fetch('/api/import-pdf', { method:'POST', body:fd }); const raw = await response.text(); let data; try { data = JSON.parse(raw); } catch { throw new Error('PDF upload service is unavailable. Start the app with npm start.'); } if (!response.ok) throw new Error(data.error || 'The PDF could not be read.'); const seen = new Set(); const list = parseQuizText(data.text).filter(item => { const key=questionKey(item); if(seen.has(key))return false; seen.add(key); return true; }); if(!list.length) throw new Error('No questions found. Ensure your PDF has numbered questions (1. 2. 3.) with A/B/C/D options.'); setPerSetData(all => ({ ...all, [setName]: { fileName: file.name, questions: list, mode: 'all', count: '' } })); } catch(e) { alert(e.message || 'Unable to read PDF.'); } };
   const updatePerSetData = (setName, updates) => { setPerSetData(all => ({ ...all, [setName]: all[setName] ? { ...all[setName], ...updates } : null })); };
-  const applyPerSet = (setName) => { const data = perSetData[setName]; if (!data) return; let list = data.questions; if (data.mode === 'custom') { const n = Number(data.count); if (!Number.isInteger(n) || n <= 0 || n > list.length) return alert(`Enter a count between 1 and ${list.length}.`); list = shuffle(list).slice(0, n); } else { list = shuffle(list); } setRounds(all => ({ ...all, [setName]: list })); setIndexes(all => ({ ...all, [setName]: 0 })); if (round === setName) reset(); setPerSetData(all => ({ ...all, [setName]: null })); };
+  const applyPerSet = (setName) => { const data = perSetData[setName]; if (!data) return; let list = data.questions; if (data.mode === 'custom') { const n = Number(data.count); if (!Number.isInteger(n) || n <= 0 || n > list.length) return alert(`Enter a count between 1 and ${list.length}.`); list = shuffle(list).slice(0, n); } else { list = shuffle(list); } setRounds(all => ({ ...all, [setName]: list })); setIndexes(all => ({ ...all, [setName]: 0 })); if (round === setName) { setCompleted(false); reset(); } setPerSetData(all => ({ ...all, [setName]: null })); };
   const clearPerSet = (setName) => { setPerSetData(all => ({ ...all, [setName]: null })); };
   const pasteImport = (text) => { if(!text.trim()) return; const seen=new Set(); const list=parseQuizText(text).filter(item=>{const key=questionKey(item);if(seen.has(key))return false;seen.add(key);return true;}); if(!list.length) return alert('No questions found. Use numbered questions (1. 2.) with A/B/C/D options.'); setCounts({A:'',B:'',C:'',FINAL:''}); setPendingImport(list); };
   const pastePerSet = (text, setName) => { if(!text.trim()) return; const seen=new Set(); const list=parseQuizText(text).filter(item=>{const key=questionKey(item);if(seen.has(key))return false;seen.add(key);return true;}); if(!list.length) return alert('No questions found. Use numbered questions (1. 2.) with A/B/C/D options.'); setPerSetData(all=>({...all,[setName]:{fileName:'Pasted text',questions:list,mode:'all',count:''}})); };
-  return <main><div className="ambient grid-left"/><div className="ambient grid-right"/><Header panel={panel} toggle={() => { setTarget(round || target); setPanel(!panel); }}/>{panel && <Operator target={target} setTarget={setTarget} edit={edit} setEdit={setEdit} add={add} load={load} importPdf={importPdf} close={() => setPanel(false)} uploadMode={uploadMode} setUploadMode={setUploadMode} importPerSetPdf={importPerSetPdf} perSetData={perSetData} updatePerSetData={updatePerSetData} applyPerSet={applyPerSet} clearPerSet={clearPerSet} pasteImport={pasteImport} pastePerSet={pastePerSet} resetToDefault={resetToDefault}/>} {pendingImport && <ImportWizard questions={pendingImport} target={target} counts={counts} setCounts={setCounts} apply={finishImport} cancel={()=>setPendingImport(null)}/>} {!round ? <Dashboard rounds={rounds} open={openRound}/> : <Quiz round={round} questions={questions} index={index} current={current} seconds={seconds} running={running} selected={selected} revealed={revealed} questionVisible={questionVisible} autoNextCountdown={autoNextCountdown} showQuestion={showQuestion} outcome={outcome} sound={sound} back={() => { setRound(null); reset(); }} changeRound={openRound} select={selectOption} reset={reset} next={nextQuestion} start={() => setRunning(!running)} setSound={toggleSound}/> }<Footer/></main>;
+  return <main><div className="ambient grid-left"/><div className="ambient grid-right"/><Header panel={panel} toggle={() => { setTarget(round || target); setPanel(!panel); }}/>{panel && <Operator target={target} setTarget={setTarget} edit={edit} setEdit={setEdit} add={add} load={load} importPdf={importPdf} close={() => setPanel(false)} uploadMode={uploadMode} setUploadMode={setUploadMode} importPerSetPdf={importPerSetPdf} perSetData={perSetData} updatePerSetData={updatePerSetData} applyPerSet={applyPerSet} clearPerSet={clearPerSet} pasteImport={pasteImport} pastePerSet={pastePerSet} resetToDefault={resetToDefault}/>} {pendingImport && <ImportWizard questions={pendingImport} target={target} counts={counts} setCounts={setCounts} apply={finishImport} cancel={()=>setPendingImport(null)}/>} {!round ? <Dashboard rounds={rounds} open={openRound}/> : <Quiz round={round} questions={questions} index={index} current={current} seconds={seconds} running={running} selected={selected} revealed={revealed} questionVisible={questionVisible} autoNextCountdown={autoNextCountdown} completed={completed} nextRound={nextRound} replay={replayCurrentSet} replaySound={() => { stopAllSounds(); if (sound) playCompleteSound(); }} showQuestion={showQuestion} outcome={outcome} sound={sound} back={() => { setRound(null); setCompleted(false); reset(); }} changeRound={openRound} select={selectOption} reset={reset} next={nextQuestion} start={() => setRunning(!running)} setSound={toggleSound}/> }<Footer/></main>;
 }
 function Header({panel,toggle}) { return <header><div className="university"><span className="seal">✦</span><span><b>SANDIP</b> UNIVERSITY<small>UGC Recognised</small></span></div><div className="event-title"><span>ENGINEERS’ DAY</span><strong>2026</strong><small>CELEBRATING INNOVATION · HONORING ENGINEERS · SHAPING TOMORROW</small></div><button className="operator" onClick={toggle}>⚙ <span>OPERATOR<br/>PANEL</span></button></header> }
 function Operator({target,setTarget,edit,setEdit,add,load,importPdf,close,uploadMode,setUploadMode,importPerSetPdf,perSetData,updatePerSetData,applyPerSet,clearPerSet,pasteImport,pastePerSet,resetToDefault}) { const [singleText,setSingleText]=useState(''); const [perSetTexts,setPerSetTexts]=useState({A:'',B:'',C:'',FINAL:''}); const handleSinglePaste=()=>{if(!singleText.trim())return alert('Please paste questions first.');pasteImport(singleText);setSingleText('');}; const handlePerSetPaste=(name)=>{const text=perSetTexts[name];if(!text||!text.trim())return alert('Please paste questions first.');pastePerSet(text,name);setPerSetTexts(prev=>({...prev,[name]:''}));}; return <aside className="control-panel"><div className="panel-title">UPLOAD QUESTIONS <button onClick={close}>×</button></div><div className="upload-tabs"><button className={`upload-tab ${uploadMode==='single'?'active':''}`} onClick={()=>setUploadMode('single')}>📄 SINGLE PDF</button><button className={`upload-tab ${uploadMode==='perSet'?'active':''}`} onClick={()=>setUploadMode('perSet')}>📑 PER-SET PDFs</button></div>{uploadMode==='single'?<><UploadZone label="Drop your question PDF here" icon="📄" onFile={importPdf}/><div className="upload-divider"><span>OR PASTE QUESTIONS</span></div><textarea className="paste-area" placeholder={"1. What is CPU?\nA) Central Processing Unit\nB) Computer Personal Unit\nC) Central Process Unit\nD) Control Processing Unit\nAnswer: A\n\n2. Next Question..."} value={singleText} onChange={e=>setSingleText(e.target.value)}></textarea><button className="paste-submit-btn" onClick={handleSinglePaste}>📥 IMPORT PASTED QUESTIONS →</button><small>Upload a PDF or paste questions above — previous questions will be replaced.</small><div className="upload-format-hint"><b>SUPPORTED FORMATS</b><small>Numbered questions (1. 2. 3.) with A/B/C/D options and Answer line, or pipe-separated format.</small></div></>:<><div className="per-set-grid">{['A','B','C','FINAL'].map(name=><div className="per-set-item" key={name}><UploadZone label={name==='FINAL'?'FINAL':`SET ${name}`} icon={name==='FINAL'?'★':name} onFile={file=>importPerSetPdf(file,name)} fileInfo={perSetData[name]?.fileName} onClear={()=>clearPerSet(name)}/>{perSetData[name]?<div className="mini-wizard"><span>{perSetData[name].questions.length} questions found</span><div className="mini-wizard-options"><button className={perSetData[name].mode==='all'?'active':''} onClick={()=>updatePerSetData(name,{mode:'all'})}>USE ALL</button><button className={perSetData[name].mode==='custom'?'active':''} onClick={()=>updatePerSetData(name,{mode:'custom'})}>CUSTOM</button></div>{perSetData[name].mode==='custom'&&<input type="number" min="1" max={perSetData[name].questions.length} placeholder={`Max ${perSetData[name].questions.length}`} value={perSetData[name].count} onChange={e=>updatePerSetData(name,{count:e.target.value})}/>}<button className="apply-set" onClick={()=>applyPerSet(name)}>APPLY (RANDOMIZED) →</button></div>:<div className="per-set-paste-box"><textarea className="paste-area paste-area-small" placeholder="Paste questions here..." value={perSetTexts[name]} onChange={e=>setPerSetTexts(prev=>({...prev,[name]:e.target.value}))}></textarea><button className="paste-submit-btn-small" onClick={()=>handlePerSetPaste(name)}>📥 IMPORT TO {name==='FINAL'?'FINAL':`SET ${name}`}</button></div>}</div>)}</div><small>Upload a PDF or paste questions for each set to replace that set's questions.</small></>}<div className="reset-section"><button className="reset-default-btn" onClick={resetToDefault}>🗑️ RESET ALL TO DEFAULT QUESTIONS</button></div></aside> }
 function ImportWizard({questions,target,counts,setCounts,apply,cancel}) { const [selectedSet,setSelectedSet]=useState(target||'A'); const [randomize,setRandomize]=useState(true); const total=Object.values(counts).reduce((sum,value)=>sum+Number(value||0),0); return <div className="import-overlay"><section className="import-wizard"><button className="wizard-close" onClick={cancel}>×</button><span className="wizard-kicker">QUESTIONS READY TO IMPORT</span><h2>{questions.length} UNIQUE QUESTIONS FOUND</h2><p className="wizard-copy">Choose how to assign these questions. Questions will be randomly picked so <b>no question repeats</b> in any set.</p><label className="wizard-shuffle-toggle"><input type="checkbox" checked={randomize} onChange={e=>setRandomize(e.target.checked)}/> <span>🔀 <b>Randomize & Shuffle question order</b> (Non-repeating across all sets)</span></label><div className="import-actions"><button className="import-choice primary" onClick={()=>apply('equal',null,randomize)}><b>⚖</b><span>DIVIDE EQUALLY<small>Distribute randomly across A, B, C & Final (~{Math.floor(questions.length/4)} each)</small></span></button><button className="import-choice" onClick={()=>apply('all_sets',null,randomize)}><b>★</b><span>COPY TO ALL SETS<small>Put all {questions.length} questions into every set</small></span></button></div><div className="single-set-picker"><div className="picker-header"><b>🎯 OR PUT ALL INTO ONE SPECIFIC SET</b><small>Click any set below to load all {questions.length} questions into it:</small></div><div className="set-buttons-row">{['A','B','C','FINAL'].map(name=><button key={name} className="set-select-btn" onClick={()=>{setSelectedSet(name);apply('selected',name,randomize);}}><b>{name==='FINAL'?'★':name}</b><span>{name==='FINAL'?'FINAL ROUND':`SET ${name}`}</span></button>)}</div></div><div className="custom-distribution"><div><b>🔢 CUSTOM DISTRIBUTION (ZERO DUPLICATES)</b><small>Each set will receive a unique, non-repeating random selection from the pool</small></div><div className="count-inputs">{['A','B','C','FINAL'].map(name=><label key={name}>{name==='FINAL'?'FINAL':`SET ${name}`}<input type="number" min="0" max={questions.length} placeholder="0" value={counts[name]} onChange={e=>setCounts({...counts,[name]:e.target.value})}/></label>)}</div><div className="count-footer"><span>{total} / {questions.length} questions assigned</span><button onClick={()=>apply('custom',null,randomize)}>APPLY RANDOM COUNTS →</button></div></div></section></div> }
 function Dashboard({rounds,open}) { return <><section className="dashboard-heading"><span>TECH QUIZ · OPERATOR DASHBOARD</span><h1>CHOOSE A ROUND TO BEGIN</h1><p>Open one set, then show its questions one at a time.</p></section><section className="set-dashboard">{['A','B','C','FINAL'].map((r,i)=><article className="set-card" key={r}><div className="set-number">{r==='FINAL'?'★':`0${i+1}`}</div><span>{r==='FINAL'?'CHAMPIONSHIP':'ENGINEERING DAY'}</span><h2>{r==='FINAL'?'FINAL ROUND':`SET ${r}`}</h2><p>{rounds[r].length} question{rounds[r].length!==1?'s':''} ready</p><button onClick={()=>open(r)}>OPEN {r==='FINAL'?'FINAL':`SET ${r}`} →</button></article>)}</section></> }
-function Quiz(p) { return <><section className="rounds"><button className="back-dashboard" onClick={p.back}>← ALL SETS</button>{['A','B','C','FINAL'].map(r=><button type="button" className={p.round===r?'round active':'round'} key={r} onClick={()=>p.changeRound(r)}><i>{r==='FINAL'?'★':`SET ${r}`}</i><span>{r==='FINAL'?'FINAL ROUND':`ROUND ${r}`}</span></button>)}</section><section className="statusbar"><span><em>●</em> LIVE QUIZ · {p.round==='FINAL'?'FINAL ROUND':`SET ${p.round}`}</span><span>QUESTION <b>{String(p.index+1).padStart(2,'0')}</b> / {String(p.questions.length).padStart(2,'0')}</span><button onClick={()=>p.setSound(!p.sound)}>{p.sound?'🔊 SOUND ON':'🔇 SOUND OFF'}</button></section>{!p.questionVisible?<section className="quiz-card standby-card anim-slide-in"><div className="standby-header"><span>{p.round==='FINAL'?'CHAMPIONSHIP ROUND':`SET ${p.round}`}</span><h2>QUESTION {String(p.index+1).padStart(2,'0')} OF {String(p.questions.length).padStart(2,'0')}</h2></div><div className="standby-body"><div className="standby-pulse-icon">⚡</div><h3>READY FOR QUESTION {p.index+1}?</h3><p>Click below to reveal the question and start the countdown timer automatically.</p><button className="see-question-btn" onClick={p.showQuestion}>👁️ SEE QUESTION (START TIMER) ▶</button></div><div className="standby-footer"><span>⏱️ 60s per question · Auto-advances when answered</span><button className="standby-skip" onClick={p.next}>SKIP TO NEXT →</button></div></section>:<section className="quiz-card active-card anim-slide-in"><div className="question-label"><span>{p.round==='FINAL'?'FINAL ROUND':`SET ${p.round}`} · QUESTION {String(p.index+1).padStart(2,'0')}</span><span className={p.seconds<=10?'timer danger':'timer'}>◷ 00:{String(p.seconds).padStart(2,'0')}</span></div><h1 className="question-text">{p.current.question||'Add questions using the operator panel'}</h1><div className="options">{p.current.options.map((x,i)=>{const correct=p.revealed&&i===p.current.answer,wrong=p.revealed&&i===p.selected&&i!==p.current.answer;return <button key={i} className={`option ${p.selected===i?'chosen':''} ${correct?'right anim-pop':''} ${wrong?'wrong anim-shake':''}`} onClick={()=>p.select(i)}><b>{letters[i]}</b><span>{x||`Option ${letters[i]}`}</span>{correct&&<i>✓ CORRECT</i>}{wrong&&<i>✕ INCORRECT</i>}</button>})}</div>{p.revealed&&<div className={`result ${p.outcome||'timeup'} anim-fade-in`}><div className="result-main-text">{p.outcome==='correct'?'✓ CORRECT ANSWER!':p.outcome==='wrong'?`✕ INCORRECT — THE RIGHT ANSWER IS ${letters[p.current.answer]}`:`TIME'S UP — THE RIGHT ANSWER IS ${letters[p.current.answer]}`}</div>{p.autoNextCountdown!==null&&<div className="auto-next-pill"><span>Next Question in <b>{p.autoNextCountdown}s</b></span><div className="auto-progress-track"><div className="auto-progress-bar"></div></div><button className="auto-skip-btn" onClick={p.next}>NEXT NOW ⏭️</button></div>}</div>}</section>}{p.questionVisible&&<section className="actions"><button className="secondary" onClick={p.reset}>↻ RESET / HIDE</button><button className="main-action" onClick={p.start}>{p.running?'Ⅱ PAUSE TIMER':'▶ START TIMER'}</button><button className="next" onClick={p.next}>NEXT QUESTION →</button></section>}</> }
+function Quiz(p) {
+  const isLast = p.index === p.questions.length - 1;
+  return (
+    <>
+      <section className="rounds">
+        <button className="back-dashboard" onClick={p.back}>← ALL SETS</button>
+        {['A','B','C','FINAL'].map(r => (
+          <button type="button" className={p.round === r ? 'round active' : 'round'} key={r} onClick={() => p.changeRound(r)}>
+            <i>{r === 'FINAL' ? '★' : `SET ${r}`}</i>
+            <span>{r === 'FINAL' ? 'FINAL ROUND' : `ROUND ${r}`}</span>
+          </button>
+        ))}
+      </section>
+
+      <section className="statusbar">
+        <span><em>●</em> LIVE QUIZ · {p.round === 'FINAL' ? 'FINAL ROUND' : `SET ${p.round}`}</span>
+        <span>QUESTION <b>{String(Math.min(p.index + 1, p.questions.length)).padStart(2, '0')}</b> / {String(p.questions.length).padStart(2, '0')}</span>
+        <button onClick={() => p.setSound(!p.sound)}>{p.sound ? '🔊 SOUND ON' : '🔇 SOUND OFF'}</button>
+      </section>
+
+      {p.completed ? (
+        <section className="quiz-card complete-card anim-slide-in">
+          <div className="complete-kicker">✦ SANDIP UNIVERSITY · ENGINEERS’ DAY 2026 ✦</div>
+          <div className="complete-trophy">🏆</div>
+          <h1 className="complete-title">{p.round === 'FINAL' ? 'CHAMPIONSHIP ROUND COMPLETE!' : `SET ${p.round} COMPLETED!`}</h1>
+          <p className="complete-desc">
+            All <b>{p.questions.length} question{p.questions.length !== 1 ? 's' : ''}</b> in {p.round === 'FINAL' ? 'the Championship Final' : `Set ${p.round}`} have been completed successfully!
+          </p>
+          <div className="complete-stats">
+            <div className="complete-stat-item">
+              <b>{p.questions.length}</b>
+              <span>Questions</span>
+            </div>
+            <div className="complete-stat-item">
+              <b>{p.round === 'FINAL' ? 'FINAL' : `SET ${p.round}`}</b>
+              <span>Finished Set</span>
+            </div>
+            <div className="complete-stat-item">
+              <b style={{ color: '#2a9d4a' }}>✓ 100%</b>
+              <span>Status</span>
+            </div>
+          </div>
+          <div className="complete-actions">
+            {p.nextRound ? (
+              <button className="complete-btn primary" onClick={() => p.changeRound(p.nextRound)}>
+                ▶ PROCEED TO {p.nextRound === 'FINAL' ? '★ FINAL ROUND' : `SET ${p.nextRound}`} →
+              </button>
+            ) : (
+              <button className="complete-btn primary" onClick={p.back}>
+                🏆 ALL ROUNDS COMPLETED · RETURN TO DASHBOARD →
+              </button>
+            )}
+            <button className="complete-btn secondary" onClick={p.replay}>
+              ↺ REPLAY SET {p.round === 'FINAL' ? 'FINAL' : p.round}
+            </button>
+            <button className="complete-btn outline" onClick={p.back}>
+              ⊞ ALL SETS
+            </button>
+          </div>
+          {p.sound && (
+            <button className="complete-btn sound-btn" onClick={p.replaySound}>
+              🔊 REPLAY CELEBRATION SOUND
+            </button>
+          )}
+        </section>
+      ) : !p.questionVisible ? (
+        <section className="quiz-card standby-card anim-slide-in">
+          <div className="standby-header">
+            <span>{p.round === 'FINAL' ? 'CHAMPIONSHIP ROUND' : `SET ${p.round}`}</span>
+            <h2>QUESTION {String(p.index + 1).padStart(2, '0')} OF {String(p.questions.length).padStart(2, '0')}</h2>
+          </div>
+          <div className="standby-body">
+            <div className="standby-pulse-icon">⚡</div>
+            <h3>READY FOR QUESTION {p.index + 1}?</h3>
+            <p>Click below to reveal the question and start the countdown timer automatically.</p>
+            <button className="see-question-btn" onClick={p.showQuestion}>👁️ SEE QUESTION (START TIMER) ▶</button>
+          </div>
+          <div className="standby-footer">
+            <span>⏱️ 60s per question · Auto-advances when answered</span>
+            <button className="standby-skip" onClick={p.next}>{isLast ? 'COMPLETE SET →' : 'SKIP TO NEXT →'}</button>
+          </div>
+        </section>
+      ) : (
+        <section className="quiz-card active-card anim-slide-in">
+          <div className="question-label">
+            <span>{p.round === 'FINAL' ? 'FINAL ROUND' : `SET ${p.round}`} · QUESTION {String(p.index + 1).padStart(2, '0')}</span>
+            <span className={p.seconds <= 10 ? 'timer danger' : 'timer'}>◷ 00:{String(p.seconds).padStart(2, '0')}</span>
+          </div>
+          <h1 className="question-text">{p.current.question || 'Add questions using the operator panel'}</h1>
+          <div className="options">
+            {p.current.options.map((x, i) => {
+              const correct = p.revealed && i === p.current.answer;
+              const wrong = p.revealed && i === p.selected && i !== p.current.answer;
+              return (
+                <button
+                  key={i}
+                  className={`option ${p.selected === i ? 'chosen' : ''} ${correct ? 'right anim-pop' : ''} ${wrong ? 'wrong anim-shake' : ''}`}
+                  onClick={() => p.select(i)}
+                >
+                  <b>{letters[i]}</b>
+                  <span>{x || `Option ${letters[i]}`}</span>
+                  {correct && <i>✓ CORRECT</i>}
+                  {wrong && <i>✕ INCORRECT</i>}
+                </button>
+              );
+            })}
+          </div>
+          {p.revealed && (
+            <div className={`result ${p.outcome || 'timeup'} anim-fade-in`}>
+              <div className="result-main-text">
+                {p.outcome === 'correct'
+                  ? '✓ CORRECT ANSWER!'
+                  : p.outcome === 'wrong'
+                  ? `✕ INCORRECT — THE RIGHT ANSWER IS ${letters[p.current.answer]}`
+                  : `TIME'S UP — THE RIGHT ANSWER IS ${letters[p.current.answer]}`}
+              </div>
+              {p.autoNextCountdown !== null && (
+                <div className="auto-next-pill">
+                  <span>{isLast ? 'Completing Set in ' : 'Next Question in '}<b>{p.autoNextCountdown}s</b></span>
+                  <div className="auto-progress-track">
+                    <div className="auto-progress-bar"></div>
+                  </div>
+                  <button className="auto-skip-btn" onClick={p.next}>
+                    {isLast ? 'FINISH SET 🏆' : 'NEXT NOW ⏭️'}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </section>
+      )}
+
+      {p.questionVisible && !p.completed && (
+        <section className="actions">
+          <button className="secondary" onClick={p.reset}>↻ RESET / HIDE</button>
+          <button className="main-action" onClick={p.start}>{p.running ? 'Ⅱ PAUSE TIMER' : '▶ START TIMER'}</button>
+          <button className="next" onClick={p.next}>{isLast ? '🏆 FINISH SET →' : 'NEXT QUESTION →'}</button>
+        </section>
+      )}
+    </>
+  );
+}
 function Footer(){return <footer><span>15 SEPTEMBER 2026</span><b>ENGINEERING <i>THE FUTURE.</i></b><span>SCHOOL OF COMPUTER SCIENCE & ENGINEERING</span></footer>}
 function UploadZone({label,icon,onFile,fileInfo,onClear}) { const [dragOver,setDragOver]=useState(false); const inputRef=useRef(null); const handleDrop=e=>{e.preventDefault();setDragOver(false);const f=e.dataTransfer.files?.[0];if(f&&(f.type==='application/pdf'||f.name.endsWith('.pdf')))onFile(f);else alert('Please upload a PDF file.');}; return <div className={`upload-zone${dragOver?' drag-over':''}${fileInfo?' has-file':''}`} onDrop={handleDrop} onDragOver={e=>{e.preventDefault();setDragOver(true);}} onDragLeave={()=>setDragOver(false)} onClick={()=>!fileInfo&&inputRef.current?.click()}>{fileInfo?<div className="file-info"><span className="file-icon">📄</span><span className="file-name">{fileInfo}</span><button className="file-clear" onClick={e=>{e.stopPropagation();onClear();}}>✕</button></div>:<><div className="upload-icon">{icon}</div><span className="upload-label">{label}</span><small>Drag & drop or click</small></>}<input ref={inputRef} type="file" accept="application/pdf" hidden onChange={e=>{if(e.target.files?.[0])onFile(e.target.files[0]);e.target.value='';}}/></div> }
 createRoot(document.getElementById('root')).render(<App/>);

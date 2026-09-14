@@ -25,3 +25,27 @@
 .reset-section{margin-top:18px;border-top:1px solid #333;padding-top:14px;text-align:center}
 .reset-default-btn{width:100%;padding:10px;background:#2a1f1f;border:1px solid #632d2d;color:#ff8e8e;font:700 11px Oswald;letter-spacing:1px;cursor:pointer;transition:all .2s;border-radius:2px;display:flex;align-items:center;justify-content:center;gap:6px}
 .reset-default-btn:hover{background:#d62c2a;color:#fff;border-color:#d62c2a;box-shadow:0 3px 8px rgba(214,44,42,.3)}
+
+/* Set Completed Celebration Screen */
+.complete-card{padding:48px 36px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:420px;background:radial-gradient(circle at 50% 20%,#fffdf9 0%,#fff5f0 100%);border:2px solid #d62c2a;box-shadow:12px 12px 0 #1b1b1b,0 0 30px rgba(214,44,42,.15);position:relative;overflow:hidden}
+.complete-card::before{content:'';position:absolute;top:0;left:0;right:0;height:6px;background:linear-gradient(90deg,#d62c2a,#f2c429,#2a9d4a,#23558f,#d62c2a);background-size:200% 100%;animation:gradientMove 4s linear infinite}
+@keyframes gradientMove{0%{background-position:0% 0%}100%{background-position:200% 0%}}
+.complete-kicker{font:700 12px Oswald;letter-spacing:3px;color:#d62c2a;text-transform:uppercase;margin-bottom:8px}
+.complete-trophy{font-size:56px;width:100px;height:100px;background:#1c1c1c;color:#f2c429;border-radius:50%;display:grid;place-items:center;margin:12px 0 16px;box-shadow:0 0 35px rgba(242,196,41,.35),0 6px 15px rgba(0,0,0,.2);animation:celebrateBounce 1.2s ease-in-out infinite alternate}
+@keyframes celebrateBounce{0%{transform:scale(1) translateY(0)}100%{transform:scale(1.08) translateY(-6px)}}
+.complete-title{font:48px Bebas Neue;letter-spacing:1.5px;margin:0 0 8px;color:#1c1c1c;line-height:1}
+.complete-desc{font-size:15px;color:#5e5750;max-width:540px;margin:0 0 24px;line-height:1.5}
+.complete-stats{display:flex;gap:14px;justify-content:center;margin-bottom:28px;flex-wrap:wrap}
+.complete-stat-item{background:#fff;border:1px solid #dcd4ca;padding:10px 20px;display:flex;flex-direction:column;align-items:center;min-width:110px;box-shadow:3px 3px 0 #e4ddd4}
+.complete-stat-item b{font:700 20px Oswald;color:#d62c2a}
+.complete-stat-item span{font:600 10px Oswald;letter-spacing:1px;color:#7a726b;text-transform:uppercase;margin-top:2px}
+.complete-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;width:100%;max-width:620px}
+.complete-btn{padding:14px 24px;font:700 13px Oswald;letter-spacing:1.2px;cursor:pointer;border:0;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px}
+.complete-btn.primary{background:#d62c2a;color:#fff;box-shadow:5px 5px 0 #1c1c1c;flex:1 1 200px}
+.complete-btn.primary:hover{background:#b52220;transform:translateY(-2px);box-shadow:7px 7px 0 #1c1c1c}
+.complete-btn.secondary{background:#1c1c1c;color:#fff;box-shadow:5px 5px 0 #888;flex:1 1 140px}
+.complete-btn.secondary:hover{background:#333;transform:translateY(-2px)}
+.complete-btn.outline{background:#fff;color:#222;border:1px solid #aaa;box-shadow:3px 3px 0 #ccc;flex:1 1 140px}
+.complete-btn.outline:hover{border-color:#d62c2a;background:#fff5f4;transform:translateY(-2px)}
+.complete-btn.sound-btn{background:#f6f1eb;color:#777;border:1px dashed #bbb;font-size:11px;padding:8px 16px;margin-top:14px}
+.complete-btn.sound-btn:hover{background:#fff;color:#d62c2a;border-color:#d62c2a}
