@@ -17,5 +17,6 @@ app.post('/api/import-pdf', upload.single('file'), async (req, res) => {
 });
 app.use((error, _req, res, _next) => res.status(400).json({ error: error.message || 'The uploaded PDF could not be processed.' }));
 app.use(express.static(root));
-app.get('/{*splat}', (_, res) => res.sendFile(path.join(root, 'index.html')));
+app.use('/Quiz', express.static(root));
+app.get('*', (_, res) => res.sendFile(path.join(root, 'index.html')));
 app.listen(process.env.PORT || 3000, () => console.log('Quiz server ready'));
