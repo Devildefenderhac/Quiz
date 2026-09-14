@@ -1,17 +1,24 @@
 # 🏆 Engineers' Day Tech Quiz Application
 
-An interactive, presentation-ready Tech Quiz web application built for **Engineers’ Day 2026** at **Sandip University (School of Computer Science & Engineering)**.
+An interactive, high-performance, presentation-ready Tech Quiz web application built for **Engineers’ Day 2026** at **Sandip University (School of Computer Science & Engineering)**.
 
-Designed for high-engagement quiz competitions, live operator control, flexible PDF & text imports, and automated timer/round management.
+Designed for high-engagement quiz competitions, live operator control, flexible PDF & text imports, randomized non-repeating question allocation, and automated timer/round management.
+
+---
+
+## 👨‍💻 Developer Credit
+**Developer**: Suchit Kumar  
+**Event**: Engineers' Day Celebration 2026  
+**Institution**: School of Computer Science & Engineering, Sandip University  
 
 ---
 
 ## 🌟 Key Features
 
 ### 1. 📄 Smart Multi-Format Question Importer
-- **Universal Question Parser**: Automatically detects and parses questions in multiple formats from PDFs or copied text.
-- **Drag & Drop PDF Upload**: Upload question papers directly via drag-and-drop or file picker.
-- **Direct Copy-Paste Option**: Dedicated paste areas with single-click import buttons for quick question loading without needing files.
+- **Universal Question Parser**: Automatically detects and parses questions in multiple formats from uploaded PDFs or raw copied text.
+- **Drag & Drop PDF Upload**: Upload question papers directly via drag-and-drop or file picker with instant backend PDF parsing.
+- **Direct Copy-Paste Option**: Dedicated paste areas with single-click import buttons for rapid question loading without needing files.
 
 #### Supported Question Formats:
 ```text
@@ -34,9 +41,9 @@ Ans: C
 ---
 
 ### 2. 🔀 Randomized Non-Repeating Question Distribution & Auto-Persistence
-- **Zero Duplicates Across Sets**: Upload a pool of questions (e.g. 50 questions) and allocate custom amounts to Set A, Set B, Set C, and Final (e.g. 10 each) with 100% mathematical guarantee of no overlapping questions across sets.
+- **Zero Duplicates Across Sets**: Upload a pool of questions (e.g., 50 questions) and allocate custom amounts to Set A, Set B, Set C, and Final Round with 100% mathematical guarantee of no overlapping questions across sets.
 - **💾 Automatic Storage (`localStorage`)**: All uploaded and configured questions are automatically stored in browser storage and persist across page refreshes.
-- **🗑️ Automatic Deletion of Old Data**: Adding new questions cleanly wipes and replaces the old questions in the target sets so previous questions never mix with new uploads.
+- **🗑️ Clean Overwrite of Sets**: Adding new questions cleanly replaces old questions in the target sets so previous questions never mix with new uploads.
 - **🔄 Reset to Defaults**: Dedicated `🗑️ RESET ALL TO DEFAULT QUESTIONS` button in the Operator Panel to wipe custom storage and restore starter questions at any time.
 - **Fisher-Yates Randomization**: Questions are randomly shuffled so sets never receive sequential or predictable batches.
 - **🔀 Toggleable Randomizer**: Enable or disable random shuffle directly within the Import Wizard.
@@ -48,7 +55,7 @@ Ans: C
 
 ---
 
-### 3. ⏱️ Live Quiz Competition Flow
+### 3. ⏱️ Live Quiz Competition Flow & Visual FX
 - **👁️ Standby Ready Screen**: Questions are hidden until the operator reveals them so participants cannot peek early.
 - **⚡ Auto-Start Timer**: Clicking **"SEE QUESTION"** reveals the options and automatically starts the 60-second countdown timer.
 - **🎯 Instant Answer Feedback**:
@@ -56,15 +63,16 @@ Ans: C
   - Web Audio API sound effects (correct chime / buzzer).
 - **⏩ 10-Second Auto-Advance**: Automatically transitions to the next question after 10 seconds, with an animated progress bar and instant skip button.
 - **🎛️ Interactive Top Navigation**: Switch between Set A, Set B, Set C, and Final Round at any moment.
+- **🌌 Dynamic Engineering Formula Backdrops**: Floating engineering formulas, math equations (E = mc², Maxwell equations, Ohm's law, Fourier transform, etc.) and tech symbols carefully positioned in negative spaces for a rich aesthetic without overlapping content.
 
 ---
 
 ## 🛠️ Tech Stack
 
 - **Frontend**: React 18, Vite
-- **Styling**: Modern CSS3 (CSS Variables, Flexbox, CSS Grid, Skewed cards, Micro-animations)
+- **Styling**: Modern CSS3 (CSS Variables, Flexbox, CSS Grid, Glassmorphism, Micro-animations)
 - **Audio**: Web Audio API (real-time synthesizer sound generation)
-- **Backend / PDF Service**: Node.js, Express, `pdf-parse`
+- **Backend / PDF Service**: Node.js, Express, `pdf-parse`, `multer`
 
 ---
 
@@ -112,5 +120,5 @@ Quiz/
 
 ---
 
-## 📜 License
-Developed for Sandip University Engineers' Day 2026. Free to use and modify for educational events.
+## 📜 License & Credits
+Developed by **Suchit Kumar** for Sandip University Engineers' Day 2026. Free to use and modify for educational events.

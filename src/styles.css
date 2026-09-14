@@ -67,12 +67,84 @@ main::before {
 
 .ambient {
   position: absolute;
-  border: 1.5px solid var(--primary);
-  opacity: 0.12;
+  border: 3px solid var(--primary);
+  opacity: 0.35;
   width: 420px;
   height: 420px;
   transform: rotate(30deg);
   pointer-events: none;
+}
+
+.floating-symbols {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.floating-symbols span {
+  position: absolute;
+  color: var(--primary);
+  opacity: 0.35;
+  font-weight: bold;
+}
+
+.floating-symbols span:nth-child(1) { top: 5%; left: 4%; transform: rotate(15deg); font-size: 50px; color: #e53935; }
+.floating-symbols span:nth-child(2) { top: 12%; left: 9%; transform: rotate(-20deg); font-size: 45px; color: #1e88e5; }
+.floating-symbols span:nth-child(3) { top: 18%; left: 3%; transform: rotate(45deg); font-size: 40px; color: #fb8c00; }
+.floating-symbols span:nth-child(4) { top: 25%; left: 8%; transform: rotate(-10deg); font-size: 48px; color: #43a047; }
+.floating-symbols span:nth-child(5) { top: 32%; left: 4%; transform: rotate(30deg); font-size: 42px; color: #8e24aa; }
+.floating-symbols span:nth-child(6) { top: 38%; left: 9%; transform: rotate(-15deg); font-size: 50px; color: #f4511e; }
+.floating-symbols span:nth-child(7) { top: 45%; left: 3%; transform: rotate(25deg); font-size: 45px; color: #e53935; }
+.floating-symbols span:nth-child(8) { top: 52%; left: 8%; transform: rotate(-35deg); font-size: 48px; color: #1e88e5; }
+.floating-symbols span:nth-child(9) { top: 58%; left: 4%; transform: rotate(10deg); font-size: 42px; color: #fdd835; }
+.floating-symbols span:nth-child(10) { top: 65%; left: 9%; transform: rotate(-15deg); font-size: 50px; color: #43a047; }
+.floating-symbols span:nth-child(11) { top: 72%; left: 3%; transform: rotate(20deg); font-size: 46px; color: #d81b60; }
+.floating-symbols span:nth-child(12) { top: 78%; left: 8%; transform: rotate(-5deg); font-size: 45px; color: #3949ab; }
+.floating-symbols span:nth-child(13) { top: 85%; left: 4%; transform: rotate(35deg); font-size: 52px; color: #00acc1; }
+.floating-symbols span:nth-child(14) { top: 92%; left: 9%; transform: rotate(-25deg); font-size: 48px; color: #6d4c41; }
+.floating-symbols span:nth-child(15) { top: 98%; left: 3%; transform: rotate(15deg); font-size: 45px; color: #e53935; }
+
+.floating-symbols span:nth-child(16) { top: 5%; right: 4%; transform: rotate(-40deg); font-size: 50px; color: #1e88e5; }
+.floating-symbols span:nth-child(17) { top: 11%; right: 9%; transform: rotate(10deg); font-size: 55px; color: #fb8c00; }
+.floating-symbols span:nth-child(18) { top: 17%; right: 3%; transform: rotate(-5deg); font-size: 48px; color: #43a047; }
+.floating-symbols span:nth-child(19) { top: 24%; right: 8%; transform: rotate(25deg); font-size: 45px; color: #8e24aa; }
+.floating-symbols span:nth-child(20) { top: 30%; right: 4%; transform: rotate(-30deg); font-size: 42px; color: #f4511e; }
+.floating-symbols span:nth-child(21) { top: 36%; right: 9%; transform: rotate(15deg); font-size: 50px; color: #4caf50; }
+.floating-symbols span:nth-child(22) { top: 42%; right: 3%; transform: rotate(-10deg); font-size: 48px; color: #546e7a; }
+.floating-symbols span:nth-child(23) { top: 48%; right: 8%; transform: rotate(45deg); font-size: 45px; color: #d32f2f; }
+.floating-symbols span:nth-child(24) { top: 55%; right: 4%; transform: rotate(-10deg); font-size: 32px; color: #7cb342; }
+.floating-symbols span:nth-child(25) { top: 61%; right: 9%; transform: rotate(15deg); font-size: 28px; color: #1e88e5; }
+.floating-symbols span:nth-child(26) { top: 68%; right: 3%; transform: rotate(5deg); font-size: 30px; color: #e53935; }
+.floating-symbols span:nth-child(27) { top: 75%; right: 8%; transform: rotate(-8deg); font-size: 26px; color: #fb8c00; }
+.floating-symbols span:nth-child(28) { top: 82%; right: 4%; transform: rotate(-15deg); font-size: 28px; color: #00acc1; }
+.floating-symbols span:nth-child(29) { top: 88%; right: 9%; transform: rotate(12deg); font-size: 30px; color: #8e24aa; }
+.floating-symbols span:nth-child(30) { top: 94%; right: 3%; transform: rotate(8deg); font-size: 28px; color: #d81b60; }
+.floating-symbols span:nth-child(31) { top: 99%; right: 8%; transform: rotate(-5deg); font-size: 24px; color: #43a047; }
+
+.floating-symbols span:nth-child(32) { top: 3%; left: 35%; transform: rotate(-10deg); font-size: 26px; color: #fb8c00; }
+.floating-symbols span:nth-child(33) { top: 3%; right: 35%; transform: rotate(15deg); font-size: 24px; color: #8e24aa; }
+.floating-symbols span:nth-child(34) { top: 22%; left: 40%; transform: rotate(-5deg); font-size: 30px; color: #00acc1; }
+.floating-symbols span:nth-child(35) { top: 25%; right: 40%; transform: rotate(12deg); font-size: 28px; color: #7cb342; }
+.floating-symbols span:nth-child(36) { top: 88%; left: 35%; transform: rotate(-8deg); font-size: 32px; color: #e53935; }
+.floating-symbols span:nth-child(37) { top: 88%; right: 35%; transform: rotate(5deg); font-size: 28px; color: #1e88e5; }
+.floating-symbols span:nth-child(38) { top: 95%; left: 45%; transform: rotate(-15deg); font-size: 26px; color: #d81b60; }
+.floating-symbols span:nth-child(39) { top: 95%; right: 45%; transform: rotate(10deg); font-size: 30px; color: #43a047; }
+.floating-symbols span:nth-child(40) { top: 25%; left: 16%; transform: rotate(-5deg); font-size: 36px; color: #1e88e5; }
+.floating-symbols span:nth-child(41) { top: 45%; left: 19%; transform: rotate(15deg); font-size: 40px; color: #e53935; }
+.floating-symbols span:nth-child(42) { top: 75%; left: 15%; transform: rotate(-10deg); font-size: 38px; color: #43a047; }
+.floating-symbols span:nth-child(43) { top: 85%; left: 20%; transform: rotate(12deg); font-size: 34px; color: #fb8c00; }
+.floating-symbols span:nth-child(44) { top: 25%; right: 16%; transform: rotate(8deg); font-size: 26px; color: #8e24aa; }
+.floating-symbols span:nth-child(45) { top: 45%; right: 19%; transform: rotate(-15deg); font-size: 28px; color: #00acc1; }
+.floating-symbols span:nth-child(46) { top: 75%; right: 15%; transform: rotate(5deg); font-size: 24px; color: #d81b60; }
+.floating-symbols span:nth-child(47) { top: 85%; right: 20%; transform: rotate(-12deg); font-size: 26px; color: #d32f2f; }
+
+.floating-symbols .formula {
+  font-family: 'Times New Roman', serif;
+  font-style: italic;
+  font-weight: 600;
+  letter-spacing: 1px;
 }
 
 .grid-left {
@@ -90,22 +162,21 @@ main::before {
    ========================================================================== */
 .main-header {
   position: relative;
-  z-index: 80;
-  width: 76%;
-  margin: 5px auto;
-  /* Centers the header and line */
+  z-index: 90;
+  width: auto;
+  margin: 5px 120px 0 240px;
   border-bottom: 2px solid var(--border-dark);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
 }
 
 .main-header-inner {
-  max-width: 1300px;
+  max-width: 100%;
   margin: 0 auto;
-  padding: 12px 24px;
+  padding: 12px 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 50px;
+  gap: 40px;
 }
 
 .sandip-brand-container {
@@ -273,6 +344,7 @@ main::before {
   letter-spacing: 1.8px;
   color: #4a443e;
   margin-top: 4px;
+  white-space: nowrap;
 }
 
 .operator-btn {
@@ -1060,26 +1132,30 @@ main::before {
    4. DASHBOARD - COMPETITION SET CARDS
    ========================================================================== */
 .dashboard-container {
-  max-width: 1320px;
+  max-width: 960px;
   width: 100%;
   margin: 0 auto;
-  padding: 40px 24px 60px;
+  padding: 2vh 24px 3vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex: 1;
 }
 
 .dashboard-heading {
   text-align: center;
-  margin-bottom: 42px;
+  margin-bottom: 3vh;
 }
 
 .dashboard-kicker {
-  font: 700 12px 'Oswald', sans-serif;
+  font: 700 18px 'Oswald', sans-serif;
   letter-spacing: 3px;
   color: var(--primary);
   text-transform: uppercase;
 }
 
 .dashboard-heading h1 {
-  font: 56px/1 'Bebas Neue', sans-serif;
+  font: 84px/1 'Bebas Neue', sans-serif;
   letter-spacing: 1.5px;
   margin: 10px 0 6px;
   color: var(--border-dark);
@@ -1088,13 +1164,14 @@ main::before {
 .dashboard-heading p {
   margin: 0;
   color: var(--text-muted);
-  font-size: 16px;
+  font-size: 22px;
 }
 
 .set-dashboard {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 24px;
+  display: flex;
+  justify-content: space-evenly;
+  gap: 14px;
+  flex-wrap: wrap;
 }
 
 .set-card {
@@ -1102,11 +1179,14 @@ main::before {
   border: 2px solid var(--border-dark);
   box-shadow: 8px 8px 0px var(--border-dark);
   border-radius: var(--radius-sm);
-  padding: 28px 24px;
+  padding: 12px 14px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  min-height: 290px;
+  min-height: 150px;
+  flex: 1;
+  min-width: 180px;
+  max-width: 220px;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
 }
@@ -1150,14 +1230,14 @@ main::before {
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  margin-bottom: 24px;
+  margin-bottom: 12px;
 }
 
 .set-number {
-  font: 700 24px/1 'Oswald', sans-serif;
+  font: 700 20px/1 'Oswald', sans-serif;
   background: var(--primary);
   color: #ffffff;
-  padding: 6px 12px;
+  padding: 4px 10px;
   border-radius: var(--radius-sm);
   box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.2);
 }
@@ -1183,7 +1263,7 @@ main::before {
 }
 
 .set-card h2 {
-  font: 36px/1 'Bebas Neue', sans-serif;
+  font: 28px/1 'Bebas Neue', sans-serif;
   letter-spacing: 1px;
   margin: 0 0 10px;
 }
@@ -2100,7 +2180,7 @@ main::before {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 40px;
+  padding: 8px 40px;
   margin-top: auto;
   border-top: 2px solid #282828;
   gap: 20px;
@@ -2344,11 +2424,6 @@ main::before {
 /* ==========================================================================
    9. RESPONSIVE BREAKPOINTS
    ========================================================================== */
-@media (max-width: 1080px) {
-  .set-dashboard {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
 
 @media (max-width: 850px) {
   .main-header {
@@ -2392,9 +2467,6 @@ main::before {
 }
 
 @media (max-width: 600px) {
-  .set-dashboard {
-    grid-template-columns: 1fr;
-  }
 
   .import-wizard {
     padding: 28px 18px;

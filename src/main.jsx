@@ -276,7 +276,7 @@ function App() {
   const clearPerSet = (setName) => { setPerSetData(all => ({ ...all, [setName]: null })); };
   const pasteImport = (text) => { if (!text.trim()) return; const seen = new Set(); const list = parseQuizText(text).filter(item => { const key = questionKey(item); if (seen.has(key)) return false; seen.add(key); return true; }); if (!list.length) return alert('No questions found. Use numbered questions (1. 2.) with A/B/C/D options.'); setCounts({ A: '', B: '', C: '', FINAL: '' }); setPendingImport(list); };
   const pastePerSet = (text, setName) => { if (!text.trim()) return; const seen = new Set(); const list = parseQuizText(text).filter(item => { const key = questionKey(item); if (seen.has(key)) return false; seen.add(key); return true; }); if (!list.length) return alert('No questions found. Use numbered questions (1. 2.) with A/B/C/D options.'); setPerSetData(all => ({ ...all, [setName]: { fileName: 'Pasted text', questions: list, mode: 'all', count: '' } })); };
-  return <main><div className="ambient grid-left" /><div className="ambient grid-right" /><Header panel={panel} toggle={() => { setTarget(round || target); setPanel(!panel); }} />{panel && <Operator target={target} setTarget={setTarget} edit={edit} setEdit={setEdit} add={add} load={load} importPdf={importPdf} close={() => setPanel(false)} uploadMode={uploadMode} setUploadMode={setUploadMode} importPerSetPdf={importPerSetPdf} perSetData={perSetData} updatePerSetData={updatePerSetData} applyPerSet={applyPerSet} clearPerSet={clearPerSet} pasteImport={pasteImport} pastePerSet={pastePerSet} resetToDefault={resetToDefault} />} {pendingImport && <ImportWizard questions={pendingImport} target={target} counts={counts} setCounts={setCounts} apply={finishImport} cancel={() => setPendingImport(null)} />} {!round ? <Dashboard rounds={rounds} open={openRound} /> : <Quiz round={round} questions={questions} index={index} current={current} seconds={seconds} running={running} selected={selected} revealed={revealed} questionVisible={questionVisible} autoNextCountdown={autoNextCountdown} completed={completed} nextRound={nextRound} replay={replayCurrentSet} replaySound={() => { stopAllSounds(); if (sound) playCompleteSound(); }} showQuestion={showQuestion} outcome={outcome} sound={sound} back={() => { setRound(null); setCompleted(false); reset(); }} changeRound={openRound} select={selectOption} reset={reset} next={nextQuestion} start={() => setRunning(!running)} setSound={toggleSound} />}<Footer /></main>;
+  return <main><div className="floating-symbols"><span>🤖</span><span>🧠</span><span>🛡️</span><span>💻</span><span>📡</span><span>☁️</span><span>🌐</span><span>⚡</span><span>⚙️</span><span>💾</span><span>🖥️</span><span>🔒</span><span>🔌</span><span>🔋</span><span>🛰️</span><span>📱</span><span>⌨️</span><span>🔍</span><span>🔐</span><span>🚀</span><span>🛡️</span><span>💻</span><span>🤖</span><span className="formula">E=mc²</span><span className="formula">F=ma</span><span className="formula">V=IR</span><span className="formula">a²+b²=c²</span><span className="formula">H₂O</span><span className="formula">O₃</span><span className="formula">sin²θ+cos²θ=1</span><span className="formula">F=G(m₁m₂)/r²</span><span className="formula">P=IV</span><span className="formula">CO₂</span><span className="formula">Δy/Δx</span><span className="formula">c=λν</span><span className="formula">∇⋅D=ρ</span><span className="formula">ΔS≥0</span><span className="formula">x=(-b±√D)/2a</span><span className="formula">pH=-log[H⁺]</span><span>⚛️</span><span>🧬</span><span>🔬</span><span>🔭</span><span className="formula">πr²</span><span className="formula">∫eˣdx</span><span className="formula">v=u+at</span><span className="formula">F=kx</span></div><div className="ambient grid-left" /><div className="ambient grid-right" /><Header panel={panel} toggle={() => { setTarget(round || target); setPanel(!panel); }} />{panel && <Operator target={target} setTarget={setTarget} edit={edit} setEdit={setEdit} add={add} load={load} importPdf={importPdf} close={() => setPanel(false)} uploadMode={uploadMode} setUploadMode={setUploadMode} importPerSetPdf={importPerSetPdf} perSetData={perSetData} updatePerSetData={updatePerSetData} applyPerSet={applyPerSet} clearPerSet={clearPerSet} pasteImport={pasteImport} pastePerSet={pastePerSet} resetToDefault={resetToDefault} />} {pendingImport && <ImportWizard questions={pendingImport} target={target} counts={counts} setCounts={setCounts} apply={finishImport} cancel={() => setPendingImport(null)} />} {!round ? <Dashboard rounds={rounds} open={openRound} /> : <Quiz round={round} questions={questions} index={index} current={current} seconds={seconds} running={running} selected={selected} revealed={revealed} questionVisible={questionVisible} autoNextCountdown={autoNextCountdown} completed={completed} nextRound={nextRound} replay={replayCurrentSet} replaySound={() => { stopAllSounds(); if (sound) playCompleteSound(); }} showQuestion={showQuestion} outcome={outcome} sound={sound} back={() => { setRound(null); setCompleted(false); reset(); }} changeRound={openRound} select={selectOption} reset={reset} next={nextQuestion} start={() => setRunning(!running)} setSound={toggleSound} />}<Footer /></main>;
 }
 function SandipLionLogo({ size = 52 }) {
   return (
@@ -334,7 +334,7 @@ function SandipLionLogo({ size = 52 }) {
 function SandipBrandLogo() {
   return (
     <div className="sandip-brand-container">
-      <SandipLionLogo size={50} />
+      <SandipLionLogo size={68} />
       <div className="sandip-text-block">
         <div className="sandip-title-row">
           <span className="sandip-name">SANDIP</span>
@@ -353,9 +353,6 @@ function SandipBrandLogo() {
         </div>
         <div className="ugc-black-box">
           Under Section 2(f) & 12(B) of UGC
-        </div>
-        <div className="maharashtra-subtext">
-          ESTABLISHED UNDER GOVT. OF MAHARASHTRA ACT. NO. XXXVIII OF 2015
         </div>
       </div>
     </div>
@@ -811,10 +808,11 @@ function Footer() {
       <div className="footer-col footer-left">
         <span className="footer-date">📅 15 SEPTEMBER 2026</span>
         <span className="footer-sub">ENGINEERS’ DAY CELEBRATION</span>
+        <span className="footer-dev" style={{ marginTop: '8px', fontSize: '11px', color: '#ffb74d', letterSpacing: '1px', fontWeight: 'bold' }}>Developer - Suchit Kumar</span>
       </div>
       <div className="footer-col footer-center">
         <span className="footer-motto">ENGINEERING <i>THE FUTURE.</i></span>
-        <span className="footer-motto-sub">INNOVATION · TECHNOLOGY · LEADERSHIP</span>
+        <span className="footer-motto-sub">INNOVATION &bull; TECHNOLOGY &bull; LEADERSHIP</span>
       </div>
       <div className="footer-col footer-right">
         <span className="footer-dept">SCHOOL OF COMPUTER SCIENCE &amp; ENGINEERING</span>
