@@ -33,10 +33,14 @@ Ans: C
 
 ---
 
-### 2. ⚖️ Flexible Import & Distribution Wizard
-- **⚖️ Divide Equally**: Automatically distributes question pools evenly across Set A, Set B, Set C & Final Round.
-- **★ Copy to All Sets**: Loads the entire pool into all four sets simultaneously.
-- **🎯 Assign to Specific Set**: Instantly loads all questions into **Set A**, **Set B**, **Set C**, or the **Final Round**.
+### 2. 🔀 Randomized Non-Repeating Question Distribution
+- **Zero Duplicates Across Sets**: Upload a pool of questions (e.g. 50 questions) and allocate custom amounts to Set A, Set B, Set C, and Final (e.g. 10 each) with 100% mathematical guarantee of no overlapping questions across sets.
+- **Fisher-Yates Randomization**: Questions are randomly shuffled so sets never receive sequential or predictable batches.
+- **🔀 Toggleable Randomizer**: Enable or disable random shuffle directly within the Import Wizard.
+- **🔀 Live On-Demand Reshuffle**: Live "SHUFFLE ORDER" button in the Quiz action bar to reshuffle question order in any set at any time.
+- **⚖️ Divide Equally**: Automatically distributes question pools evenly across Set A, Set B, Set C & Final Round without duplicates.
+- **★ Copy to All Sets**: Loads the entire pool into all four sets simultaneously with independent random ordering.
+- **🎯 Assign to Specific Set**: Instantly loads questions into **Set A**, **Set B**, **Set C**, or the **Final Round**.
 - **🔢 Custom Distribution**: Specify exact question numbers for each round.
 - **📑 Per-Set Mode**: Manage each set individually with its own PDF dropzone or paste area.
 
