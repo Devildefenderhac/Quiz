@@ -1,0 +1,8 @@
+{
+  "name": "engineering-day-quiz",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": { "dev": "vite", "build": "vite build", "start": "vite build && node server/index.js" },
+  "dependencies": { "@vitejs/plugin-react": "latest", "vite": "latest", "react": "latest", "react-dom": "latest", "express": "latest", "multer": "latest", "pdf-parse": "latest" },
+  "devDependencies": {}
+}
