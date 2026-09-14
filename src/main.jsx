@@ -87,10 +87,15 @@ const getStoredRounds = () => {
   return initialRounds;
 };
 function shuffle(array) { const arr = [...array]; for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1));[arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; }
+const assetUrl = file => {
+  const base = import.meta.env.BASE_URL || './';
+  return base.endsWith('/') ? base + file : base + '/' + file;
+};
+
 let questionAudio = null;
 function getQuestionAudio() {
   if (!questionAudio && typeof Audio !== 'undefined') {
-    questionAudio = new Audio('/when_come_question.mpeg');
+    questionAudio = new Audio(assetUrl('when_come_question.mpeg'));
     questionAudio.preload = 'auto';
   }
   return questionAudio;
@@ -116,7 +121,7 @@ function stopQuestionSound() {
 let timerAudio = null;
 function getTimerAudio() {
   if (!timerAudio && typeof Audio !== 'undefined') {
-    timerAudio = new Audio('/timer.mpeg');
+    timerAudio = new Audio(assetUrl('timer.mpeg'));
     timerAudio.preload = 'auto';
     timerAudio.loop = true;
   }
@@ -151,7 +156,7 @@ function stopTimerSound() {
 let trueAudio = null;
 function getTrueAudio() {
   if (!trueAudio && typeof Audio !== 'undefined') {
-    trueAudio = new Audio('/true_answer.mpeg');
+    trueAudio = new Audio(assetUrl('true_answer.mpeg'));
     trueAudio.preload = 'auto';
   }
   return trueAudio;
@@ -178,7 +183,7 @@ function stopTrueSound() {
 let wrongAudio = null;
 function getWrongAudio() {
   if (!wrongAudio && typeof Audio !== 'undefined') {
-    wrongAudio = new Audio('/wrong_answer.mpeg');
+    wrongAudio = new Audio(assetUrl('wrong_answer.mpeg'));
     wrongAudio.preload = 'auto';
   }
   return wrongAudio;
@@ -205,7 +210,7 @@ function stopWrongSound() {
 let completeAudio = null;
 function getCompleteAudio() {
   if (!completeAudio && typeof Audio !== 'undefined') {
-    completeAudio = new Audio('/complete_the_set.mpeg');
+    completeAudio = new Audio(assetUrl('complete_the_set.mpeg'));
     completeAudio.preload = 'auto';
   }
   return completeAudio;
@@ -1072,4 +1077,8 @@ function UploadZone({ label, icon, onFile, fileInfo, onClear }) {
   );
 }
 
-createRoot(document.getElementById('root')).render(<App />);
+const rootElement = document.getElementById('root');
+if (rootElement) {
+  createRoot(rootElement).render(<App />);
+}
+
