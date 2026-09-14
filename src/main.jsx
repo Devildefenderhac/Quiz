@@ -1,6 +1,42 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
+import * as pdfjsLib from 'pdfjs-dist';
 import './styles.css';
+
+// Set up PDF.js worker for client-side extraction (works on static hosting & GitHub Pages)
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version || '4.10.38'}/build/pdf.worker.min.mjs`;
+
+async function extractTextFromPdf(file) {
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) });
+    const pdf = await loadingTask.promise;
+    let fullText = '';
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const textContent = await page.getTextContent();
+      const pageText = textContent.items.map(item => ('str' in item ? item.str : '')).join(' ');
+      fullText += pageText + '\n';
+    }
+    if (fullText.trim()) return fullText;
+  } catch (err) {
+    console.warn('Client-side PDF extraction failed, falling back to server API:', err);
+  }
+
+  // Fallback to backend API if available
+  const fd = new FormData();
+  fd.append('file', file);
+  const response = await fetch('/api/import-pdf', { method: 'POST', body: fd });
+  const raw = await response.text();
+  let data;
+  try {
+    data = JSON.parse(raw);
+  } catch {
+    throw new Error('PDF could not be parsed. You can also copy and paste the question text directly.');
+  }
+  if (!response.ok) throw new Error(data.error || 'The PDF could not be read.');
+  return data.text;
+}
 
 const q = (question, options, answer) => ({ question, options, answer });
 const initialRounds = {
@@ -268,9 +304,42 @@ function App() {
   const questionKey = question => question.question.trim().toLowerCase().replace(/\s+/g, ' ');
   const add = () => { if (!edit.question.trim() || edit.options.some(x => !x.trim())) return; const key = questionKey(edit); if (Object.values(rounds).flat().some(item => questionKey(item) === key)) return alert('This question already exists in another set.'); setRounds(all => ({ ...all, [target]: [...all[target], { ...edit, options: [...edit.options] }] })); setEdit(blank()); };
   const load = text => { const rows = text.split(/\r?\n/).filter(Boolean).map(x => x.split('|').map(y => y.trim())).filter(x => x.length >= 6); const unique = []; const seen = new Set(); rows.map(x => q(x[0], x.slice(1, 5), Math.max(0, letters.indexOf(x[5].toUpperCase())))).forEach(item => { const key = questionKey(item); if (!seen.has(key)) { seen.add(key); unique.push(item); } }); if (!unique.length) return alert('No valid questions found.'); const split = { A: [], B: [], C: [], FINAL: [] }; shuffle(unique).forEach((item, i) => split[['A', 'B', 'C', 'FINAL'][i % 4]].push(item)); setRounds(split); setIndexes({ A: 0, B: 0, C: 0, FINAL: 0 }); if (round) reset(); alert(`${unique.length} unique questions randomly divided across all four sets.`); };
-  const importPdf = async file => { if (!file) return; const fd = new FormData(); fd.append('file', file); try { const response = await fetch('/api/import-pdf', { method: 'POST', body: fd }); const raw = await response.text(); let data; try { data = JSON.parse(raw); } catch { throw new Error('PDF upload service is unavailable. Start the app with npm.cmd start, then try again.'); } if (!response.ok) throw new Error(data.error || 'The PDF could not be read.'); const seen = new Set(); const list = parseQuizText(data.text).filter(item => { const key = questionKey(item); if (seen.has(key)) return false; seen.add(key); return true; }); if (!list.length) throw new Error('No questions found. Ensure your PDF has numbered questions (1. 2. 3.) with A/B/C/D options.'); setCounts({ A: '', B: '', C: '', FINAL: '' }); setPendingImport(list); } catch (e) { alert(e.message || 'Unable to read PDF. Paste copied text instead.'); } };
+  const importPdf = async file => {
+    if (!file) return;
+    try {
+      const text = await extractTextFromPdf(file);
+      const seen = new Set();
+      const list = parseQuizText(text).filter(item => {
+        const key = questionKey(item);
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+      if (!list.length) throw new Error('No questions found. Ensure your PDF has numbered questions (1. 2. 3.) with A/B/C/D options.');
+      setCounts({ A: '', B: '', C: '', FINAL: '' });
+      setPendingImport(list);
+    } catch (e) {
+      alert(e.message || 'Unable to read PDF. Paste copied text instead.');
+    }
+  };
   const finishImport = (mode, chosenSet, doShuffle = true) => { const list = pendingImport; if (!list) return; const pool = doShuffle ? shuffle(list) : list; let split = { A: [], B: [], C: [], FINAL: [] }; if (mode === 'equal') pool.forEach((item, i) => split[['A', 'B', 'C', 'FINAL'][i % 4]].push(item)); if (mode === 'all_sets') split = { A: doShuffle ? shuffle(list) : [...list], B: doShuffle ? shuffle(list) : [...list], C: doShuffle ? shuffle(list) : [...list], FINAL: doShuffle ? shuffle(list) : [...list] }; if (mode === 'selected') { const s = chosenSet || target || 'A'; split = { ...rounds, [s]: pool }; } if (mode === 'custom') { const numbers = Object.fromEntries(Object.entries(counts).map(([key, value]) => [key, Number(value || 0)])); const total = Object.values(numbers).reduce((a, b) => a + b, 0); if (Object.values(numbers).some(x => !Number.isInteger(x) || x < 0) || total > list.length || total === 0) return alert(`Enter valid counts up to ${list.length} questions.`); let at = 0; Object.keys(split).forEach(key => { split[key] = pool.slice(at, at + numbers[key]); at += numbers[key] }); } setRounds(split); setIndexes({ A: 0, B: 0, C: 0, FINAL: 0 }); if (round) reset(); setPendingImport(null); };
-  const importPerSetPdf = async (file, setName) => { if (!file) return; const fd = new FormData(); fd.append('file', file); try { const response = await fetch('/api/import-pdf', { method: 'POST', body: fd }); const raw = await response.text(); let data; try { data = JSON.parse(raw); } catch { throw new Error('PDF upload service is unavailable. Start the app with npm start.'); } if (!response.ok) throw new Error(data.error || 'The PDF could not be read.'); const seen = new Set(); const list = parseQuizText(data.text).filter(item => { const key = questionKey(item); if (seen.has(key)) return false; seen.add(key); return true; }); if (!list.length) throw new Error('No questions found. Ensure your PDF has numbered questions (1. 2. 3.) with A/B/C/D options.'); setPerSetData(all => ({ ...all, [setName]: { fileName: file.name, questions: list, mode: 'all', count: '' } })); } catch (e) { alert(e.message || 'Unable to read PDF.'); } };
+  const importPerSetPdf = async (file, setName) => {
+    if (!file) return;
+    try {
+      const text = await extractTextFromPdf(file);
+      const seen = new Set();
+      const list = parseQuizText(text).filter(item => {
+        const key = questionKey(item);
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+      if (!list.length) throw new Error('No questions found. Ensure your PDF has numbered questions (1. 2. 3.) with A/B/C/D options.');
+      setPerSetData(all => ({ ...all, [setName]: { fileName: file.name, questions: list, mode: 'all', count: '' } }));
+    } catch (e) {
+      alert(e.message || 'Unable to read PDF.');
+    }
+  };
   const updatePerSetData = (setName, updates) => { setPerSetData(all => ({ ...all, [setName]: all[setName] ? { ...all[setName], ...updates } : null })); };
   const applyPerSet = (setName) => { const data = perSetData[setName]; if (!data) return; let list = data.questions; if (data.mode === 'custom') { const n = Number(data.count); if (!Number.isInteger(n) || n <= 0 || n > list.length) return alert(`Enter a count between 1 and ${list.length}.`); list = shuffle(list).slice(0, n); } else { list = shuffle(list); } setRounds(all => ({ ...all, [setName]: list })); setIndexes(all => ({ ...all, [setName]: 0 })); if (round === setName) { setCompleted(false); reset(); } setPerSetData(all => ({ ...all, [setName]: null })); };
   const clearPerSet = (setName) => { setPerSetData(all => ({ ...all, [setName]: null })); };
