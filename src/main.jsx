@@ -1,10 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import * as pdfjsLib from 'pdfjs-dist';
+import pdfWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import './styles.css';
 
-// Set up PDF.js worker for client-side extraction (works on static hosting & GitHub Pages)
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version || '4.10.38'}/build/pdf.worker.min.mjs`;
+// Set up PDF.js worker for client-side extraction (works offline, locally & on GitHub Pages)
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
 
 async function extractTextFromPdf(file) {
   try {
@@ -12,30 +13,55 @@ async function extractTextFromPdf(file) {
     const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) });
     const pdf = await loadingTask.promise;
     let fullText = '';
+    
     for (let i = 1; i <= pdf.numPages; i++) {
       const page = await pdf.getPage(i);
       const textContent = await page.getTextContent();
-      const pageText = textContent.items.map(item => ('str' in item ? item.str : '')).join(' ');
-      fullText += pageText + '\n';
+      const items = textContent.items.filter(item => 'str' in item && item.str.length > 0);
+      
+      // Sort items by vertical position (top to bottom), then horizontal (left to right)
+      items.sort((a, b) => {
+        const yDiff = b.transform[5] - a.transform[5];
+        if (Math.abs(yDiff) > 4) return yDiff;
+        return a.transform[4] - b.transform[4];
+      });
+
+      let lastY = null;
+      let pageText = '';
+      for (const item of items) {
+        if (lastY !== null && Math.abs(item.transform[5] - lastY) > 4) {
+          pageText += '\n';
+        } else if (pageText && !pageText.endsWith('\n') && !pageText.endsWith(' ')) {
+          pageText += ' ';
+        }
+        pageText += item.str;
+        if (item.hasEOL) pageText += '\n';
+        lastY = item.transform[5];
+      }
+      fullText += pageText + '\n\n';
     }
     if (fullText.trim()) return fullText;
   } catch (err) {
-    console.warn('Client-side PDF extraction failed, falling back to server API:', err);
+    console.warn('Client-side PDF extraction failed, attempting backend fallback:', err);
   }
 
   // Fallback to backend API if available
-  const fd = new FormData();
-  fd.append('file', file);
-  const response = await fetch('/api/import-pdf', { method: 'POST', body: fd });
-  const raw = await response.text();
-  let data;
   try {
-    data = JSON.parse(raw);
-  } catch {
-    throw new Error('PDF could not be parsed. You can also copy and paste the question text directly.');
+    const fd = new FormData();
+    fd.append('file', file);
+    const response = await fetch('/api/import-pdf', { method: 'POST', body: fd });
+    const raw = await response.text();
+    let data;
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      throw new Error('PDF could not be parsed. You can also copy and paste the question text directly.');
+    }
+    if (!response.ok) throw new Error(data.error || 'The PDF could not be read.');
+    return data.text;
+  } catch (backendErr) {
+    throw new Error('PDF extraction failed. Please ensure the PDF has selectable text or copy and paste the text directly.');
   }
-  if (!response.ok) throw new Error(data.error || 'The PDF could not be read.');
-  return data.text;
 }
 
 const q = (question, options, answer) => ({ question, options, answer });
@@ -212,7 +238,126 @@ function stopAllSounds() {
 }
 
 function tone(kind) { try { const a = new AudioContext(), o = a.createOscillator(), g = a.createGain(); o.type = kind === 'correct' ? 'sine' : 'sawtooth'; o.frequency.value = kind === 'correct' ? 620 : 160; g.gain.value = .08; o.connect(g).connect(a.destination); o.start(); o.stop(a.currentTime + .45); } catch { } }
-function parseQuizText(text) { const lines = text.split(/\r?\n/); const pipes = lines.filter(Boolean).map(x => x.split('|').map(y => y.trim())).filter(x => x.length >= 6); if (pipes.length) return pipes.map(x => q(x[0], x.slice(1, 5), Math.max(0, letters.indexOf(x[5].toUpperCase())))); const res = []; let c = null; for (const raw of lines) { const line = raw.trim(); if (!line) continue; let m; m = line.match(/^Q?\s*(\d+)\s*[.):-]\s*(.{4,})/i); if (m && !/^[A-Da-d]\s*[).]/.test(line)) { if (c && c.options.some(Boolean)) res.push(c); c = { question: m[2], options: ['', '', '', ''], answer: 0 }; continue; } m = line.match(/(?:answer|ans)\s*[.:]\s*([A-Da-d])/i); if (m && c) { c.answer = Math.max(0, 'ABCD'.indexOf(m[1].toUpperCase())); continue; } m = line.match(/^\(?([A-Da-d])\s*[.):-]\s*(.+)/); if (m && c) { const i = 'ABCD'.indexOf(m[1].toUpperCase()); if (i >= 0) c.options[i] = m[2].trim(); continue; } } if (c && c.options.some(Boolean)) res.push(c); return res.map(x => q(x.question, x.options, x.answer)); }
+function parseQuizText(text) {
+  if (!text || typeof text !== 'string') return [];
+
+  const rawLines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+
+  // 1. Check pipe-delimited format (Question | OptA | OptB | OptC | OptD | AnsLetter)
+  const pipes = rawLines.map(x => x.split('|').map(y => y.trim())).filter(x => x.length >= 6);
+  if (pipes.length >= 1 && pipes.length === rawLines.length) {
+    return pipes.map(x => q(x[0], [x[1], x[2], x[3], x[4]], Math.max(0, letters.indexOf((x[5] || 'A').toUpperCase()))));
+  }
+
+  // 2. Pre-process lines to separate inline options like A) ... B) ... or (A) ... (B) ...
+  const normalizedLines = [];
+  for (const raw of text.split(/\r?\n/)) {
+    const line = raw.trim();
+    if (!line) continue;
+    
+    const inlineOptRegex = /(?:^|\s+)(?:\(?([A-Da-d]|[1-4])[\).:-]|\[([A-Da-d]|[1-4])\]|\b([A-Da-d])\s*[.):-])\s+/g;
+    const matches = [...line.matchAll(inlineOptRegex)];
+    if (matches.length >= 2) {
+      for (let m = 0; m < matches.length; m++) {
+        const start = matches[m].index;
+        if (m === 0 && start > 0) {
+          const preText = line.slice(0, start).trim();
+          if (preText) normalizedLines.push(preText);
+        }
+        const end = m + 1 < matches.length ? matches[m + 1].index : line.length;
+        const part = line.slice(start, end).trim();
+        if (part) normalizedLines.push(part);
+      }
+    } else {
+      normalizedLines.push(line);
+    }
+  }
+
+  const isAnswer = line => /^(?:Ans(?:wer)?|Correct(?:\s*Option|\s*Answer)?|Key|Option)\s*(?:is|:|-|=|\.)?\s*(.+)/i.test(line);
+  const isOption = line => /^(?:\(?([A-Da-d])\s*[.):-]|\[([A-Da-d])\]|\(([A-Da-d])\)|([A-Da-d])\s*[.):-])\s*(.+)/i.test(line);
+  const isQuestion = line => /^(?:Q(?:uestion)?\s*[\d.]*\s*[:.-]?|\(?\d+\s*[.):-]|\[\d+\])\s+\S+/i.test(line) && !isAnswer(line) && !isOption(line);
+
+  const questions = [];
+  let currentQ = null;
+
+  for (let i = 0; i < normalizedLines.length; i++) {
+    const line = normalizedLines[i];
+
+    if (isAnswer(line)) {
+      if (currentQ) {
+        const match = line.match(/^(?:Ans(?:wer)?|Correct(?:\s*Option|\s*Answer)?|Key|Option)\s*(?:is|:|-|=|\.)?\s*(.+)/i);
+        const ansVal = match ? match[1].trim() : '';
+        const letterMatch = ansVal.match(/\b([A-Da-d]|[1-4])\b/i);
+        if (letterMatch) {
+          const char = letterMatch[1].toUpperCase();
+          if ('ABCD'.includes(char)) currentQ.answer = 'ABCD'.indexOf(char);
+          else if ('1234'.includes(char)) currentQ.answer = parseInt(char, 10) - 1;
+        } else {
+          const matchIndex = currentQ.options.findIndex(opt => opt && ansVal.toLowerCase().includes(opt.toLowerCase()));
+          if (matchIndex >= 0) currentQ.answer = matchIndex;
+        }
+      }
+      continue;
+    }
+
+    if (isOption(line)) {
+      if (currentQ) {
+        const optMatch = line.match(/^(?:\(?([A-Da-d])\s*[.):-]|\[([A-Da-d])\]|\(([A-Da-d])\)|([A-Da-d])\s*[.):-])\s*(.+)/i);
+        if (optMatch) {
+          const marker = (optMatch[1] || optMatch[2] || optMatch[3] || optMatch[4]).toUpperCase();
+          let optText = optMatch[5].trim();
+          
+          const trailingAns = optText.match(/\s+(?:Ans(?:wer)?|Correct|Key)\s*[:.-]?\s*([A-Da-d]|[1-4])/i);
+          if (trailingAns) {
+            const char = trailingAns[1].toUpperCase();
+            if ('ABCD'.includes(char)) currentQ.answer = 'ABCD'.indexOf(char);
+            else if ('1234'.includes(char)) currentQ.answer = parseInt(char, 10) - 1;
+            optText = optText.replace(/\s+(?:Ans(?:wer)?|Correct|Key)\s*[:.-]?\s*([A-Da-d]|[1-4])/i, '').trim();
+          }
+
+          const idx = 'ABCD'.indexOf(marker);
+          if (idx >= 0 && idx < 4) {
+            currentQ.options[idx] = optText;
+          }
+        }
+      }
+      continue;
+    }
+
+    if (isQuestion(line)) {
+      if (currentQ && currentQ.options.filter(Boolean).length >= 2) {
+        questions.push(currentQ);
+      }
+      const qText = line.replace(/^(?:Q(?:uestion)?\s*[\d.]*\s*[:.-]?\s*|\(?\d+\s*[.):-]\s*|\[\d+\]\s*)/i, '').trim();
+      currentQ = { question: qText, options: ['', '', '', ''], answer: 0 };
+      continue;
+    }
+
+    // Check for unnumbered question header before option A
+    if (!currentQ || currentQ.options.filter(Boolean).length >= 2) {
+      const nextLine = normalizedLines[i + 1];
+      if (nextLine && isOption(nextLine)) {
+        if (currentQ && currentQ.options.filter(Boolean).length >= 2) {
+          questions.push(currentQ);
+        }
+        currentQ = { question: line, options: ['', '', '', ''], answer: 0 };
+        continue;
+      }
+    }
+
+    if (currentQ) {
+      if (currentQ.options.every(o => !o)) {
+        currentQ.question += ' ' + line;
+      }
+    }
+  }
+
+  if (currentQ && currentQ.options.filter(Boolean).length >= 2) {
+    questions.push(currentQ);
+  }
+
+  return questions.map(x => q(x.question, x.options, x.answer));
+}
 
 function App() {
   const [rounds, setRounds] = useState(getStoredRounds); const [round, setRound] = useState(null);
