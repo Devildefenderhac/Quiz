@@ -85,6 +85,96 @@ function stopTimerSound() {
     }
   } catch {}
 }
+
+let trueAudio = null;
+function getTrueAudio() {
+  if (!trueAudio && typeof Audio !== 'undefined') {
+    trueAudio = new Audio('/true_answer.mpeg');
+    trueAudio.preload = 'auto';
+  }
+  return trueAudio;
+}
+function playTrueSound() {
+  try {
+    const a = getTrueAudio();
+    if (a) {
+      a.currentTime = 0;
+      a.play().catch(() => {});
+    }
+  } catch {}
+}
+function stopTrueSound() {
+  try {
+    const a = getTrueAudio();
+    if (a) {
+      a.pause();
+      a.currentTime = 0;
+    }
+  } catch {}
+}
+
+let wrongAudio = null;
+function getWrongAudio() {
+  if (!wrongAudio && typeof Audio !== 'undefined') {
+    wrongAudio = new Audio('/wrong_answer.mpeg');
+    wrongAudio.preload = 'auto';
+  }
+  return wrongAudio;
+}
+function playWrongSound() {
+  try {
+    const a = getWrongAudio();
+    if (a) {
+      a.currentTime = 0;
+      a.play().catch(() => {});
+    }
+  } catch {}
+}
+function stopWrongSound() {
+  try {
+    const a = getWrongAudio();
+    if (a) {
+      a.pause();
+      a.currentTime = 0;
+    }
+  } catch {}
+}
+
+let completeAudio = null;
+function getCompleteAudio() {
+  if (!completeAudio && typeof Audio !== 'undefined') {
+    completeAudio = new Audio('/complete_the_set.mpeg');
+    completeAudio.preload = 'auto';
+  }
+  return completeAudio;
+}
+function playCompleteSound() {
+  try {
+    const a = getCompleteAudio();
+    if (a) {
+      a.currentTime = 0;
+      a.play().catch(() => {});
+    }
+  } catch {}
+}
+function stopCompleteSound() {
+  try {
+    const a = getCompleteAudio();
+    if (a) {
+      a.pause();
+      a.currentTime = 0;
+    }
+  } catch {}
+}
+
+function stopAllSounds() {
+  stopQuestionSound();
+  stopTimerSound();
+  stopTrueSound();
+  stopWrongSound();
+  stopCompleteSound();
+}
+
 function tone(kind) { try { const a = new AudioContext(), o = a.createOscillator(), g = a.createGain(); o.type = kind === 'correct' ? 'sine' : 'sawtooth'; o.frequency.value = kind === 'correct' ? 620 : 160; g.gain.value = .08; o.connect(g).connect(a.destination); o.start(); o.stop(a.currentTime + .45); } catch {} }
 function parseQuizText(text) { const lines=text.split(/\r?\n/); const pipes=lines.filter(Boolean).map(x=>x.split('|').map(y=>y.trim())).filter(x=>x.length>=6); if(pipes.length) return pipes.map(x=>q(x[0],x.slice(1,5),Math.max(0,letters.indexOf(x[5].toUpperCase())))); const res=[]; let c=null; for(const raw of lines){ const line=raw.trim(); if(!line) continue; let m; m=line.match(/^Q?\s*(\d+)\s*[.):-]\s*(.{4,})/i); if(m&&!/^[A-Da-d]\s*[).]/.test(line)){ if(c&&c.options.some(Boolean)) res.push(c); c={question:m[2],options:['','','',''],answer:0}; continue; } m=line.match(/(?:answer|ans)\s*[.:]\s*([A-Da-d])/i); if(m&&c){ c.answer=Math.max(0,'ABCD'.indexOf(m[1].toUpperCase())); continue; } m=line.match(/^\(?([A-Da-d])\s*[.):-]\s*(.+)/); if(m&&c){ const i='ABCD'.indexOf(m[1].toUpperCase()); if(i>=0) c.options[i]=m[2].trim(); continue; } } if(c&&c.options.some(Boolean)) res.push(c); return res.map(x=>q(x.question,x.options,x.answer)); }
 
@@ -93,12 +183,29 @@ function App() {
   const [indexes, setIndexes] = useState({ A: 0, B: 0, C: 0, FINAL: 0 }); const [seconds, setSeconds] = useState(60); const [running, setRunning] = useState(false); const [selected, setSelected] = useState(null); const [revealed, setRevealed] = useState(false); const [questionVisible, setQuestionVisible] = useState(false); const [autoNextCountdown, setAutoNextCountdown] = useState(null); const [sound, setSound] = useState(true); const [panel, setPanel] = useState(false); const [target, setTarget] = useState('A'); const [edit, setEdit] = useState(blank()); const [pendingImport, setPendingImport] = useState(null); const [counts, setCounts] = useState({ A: '', B: '', C: '', FINAL: '' });
   const [uploadMode, setUploadMode] = useState('single'); const [perSetData, setPerSetData] = useState({ A: null, B: null, C: null, FINAL: null });
   const questions = round ? rounds[round] : []; const index = round ? indexes[round] : 0; const current = questions[index] || blank();
-  const reset = () => { setSeconds(60); setRunning(false); setSelected(null); setRevealed(false); setQuestionVisible(false); setAutoNextCountdown(null); stopQuestionSound(); stopTimerSound(); };
+  const reset = () => { setSeconds(60); setRunning(false); setSelected(null); setRevealed(false); setQuestionVisible(false); setAutoNextCountdown(null); stopAllSounds(); };
   const openRound = key => { setRound(key); setTarget(key); setPanel(false); reset(); };
-  const showQuestion = () => { setQuestionVisible(true); setSeconds(60); setRunning(true); setSelected(null); setRevealed(false); setAutoNextCountdown(null); if (sound) playQuestionSound(); };
-  const nextQuestion = () => { if (!questions.length) return; stopQuestionSound(); stopTimerSound(); setIndexes(all => ({ ...all, [round]: (all[round] + 1) % questions.length })); reset(); };
-  const selectOption = n => { if (!revealed) { setSelected(n); setRevealed(true); setRunning(false); stopQuestionSound(); stopTimerSound(); if (sound) tone(n === current.answer ? 'correct' : 'wrong'); setAutoNextCountdown(10); } };
-  const toggleSound = () => { if (sound) { stopQuestionSound(); stopTimerSound(); } setSound(!sound); };
+  const showQuestion = () => { setQuestionVisible(true); setSeconds(60); setRunning(true); setSelected(null); setRevealed(false); setAutoNextCountdown(null); stopAllSounds(); if (sound) playQuestionSound(); };
+  const nextQuestion = () => { if (!questions.length) return; stopAllSounds(); setIndexes(all => ({ ...all, [round]: (all[round] + 1) % questions.length })); reset(); };
+  const selectOption = n => {
+    if (!revealed) {
+      setSelected(n);
+      setRevealed(true);
+      setRunning(false);
+      stopQuestionSound();
+      stopTimerSound();
+      const isCorrect = n === current.answer;
+      if (sound) {
+        if (isCorrect) playTrueSound();
+        else playWrongSound();
+      }
+      if (index === questions.length - 1) {
+        setTimeout(() => { if (sound) playCompleteSound(); }, 900);
+      }
+      setAutoNextCountdown(10);
+    }
+  };
+  const toggleSound = () => { if (sound) { stopAllSounds(); } setSound(!sound); };
   const resetToDefault = () => {
     if (window.confirm('Reset all questions to default starter questions? Any custom uploaded questions will be deleted.')) {
       try { localStorage.removeItem(STORAGE_KEY); } catch {}
@@ -121,7 +228,19 @@ function App() {
       pauseTimerSound();
     }
   }, [running, questionVisible, revealed, seconds, sound]);
-  useEffect(() => { if (seconds === 0 && questionVisible && !revealed) { setRunning(false); setRevealed(true); stopQuestionSound(); stopTimerSound(); if (sound) tone('wrong'); setAutoNextCountdown(10); } }, [seconds, sound, questionVisible, revealed]);
+  useEffect(() => {
+    if (seconds === 0 && questionVisible && !revealed) {
+      setRunning(false);
+      setRevealed(true);
+      stopQuestionSound();
+      stopTimerSound();
+      if (sound) playWrongSound();
+      if (index === questions.length - 1) {
+        setTimeout(() => { if (sound) playCompleteSound(); }, 900);
+      }
+      setAutoNextCountdown(10);
+    }
+  }, [seconds, sound, questionVisible, revealed, index, questions.length]);
   useEffect(() => { if (autoNextCountdown === null) return; if (autoNextCountdown <= 0) { nextQuestion(); return; } const id = setTimeout(() => { setAutoNextCountdown(c => (c !== null ? c - 1 : null)); }, 1000); return () => clearTimeout(id); }, [autoNextCountdown]);
 
   const outcome = useMemo(() => { if (!revealed) return ''; if (selected === null) return 'timeup'; return selected === current.answer ? 'correct' : 'wrong'; }, [revealed, selected, current.answer]);
