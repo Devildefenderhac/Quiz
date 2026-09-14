@@ -73,3 +73,23 @@
 .complete-btn.outline:hover{border-color:#d62c2a;background:#fff5f4;transform:translateY(-2px)}
 .complete-btn.sound-btn{background:#f6f1eb;color:#777;border:1px dashed #bbb;font-size:11px;padding:8px 16px;margin-top:14px}
 .complete-btn.sound-btn:hover{background:#fff;color:#d62c2a;border-color:#d62c2a}
+
+/* Institutional Quiz Footer */
+.quiz-footer{width:100%;max-width:none;background:#181818;color:#eee;display:flex;justify-content:space-between;align-items:center;padding:18px 40px;margin-top:40px;border-top:2px solid #2a2a2a;box-sizing:border-box;gap:20px;position:relative}
+.quiz-footer::before{content:'';position:absolute;top:-2px;left:0;right:0;height:2px;background:linear-gradient(90deg,#d62c2a,#f2c429,#d62c2a)}
+.footer-col{display:flex;flex-direction:column;gap:3px}
+.footer-left{align-items:flex-start}
+.footer-center{align-items:center;text-align:center}
+.footer-right{align-items:flex-end;text-align:right}
+.footer-date{font:700 12px Oswald,sans-serif;letter-spacing:1px;color:#f2c429}
+.footer-sub{font:600 10px 'DM Sans',sans-serif;letter-spacing:0.8px;color:#888;text-transform:uppercase}
+.footer-motto{font:28px/1 Bebas Neue,sans-serif;letter-spacing:2px;color:#fff}
+.footer-motto i{color:#d62c2a;font-style:normal}
+.footer-motto-sub{font:700 8.5px 'DM Sans',sans-serif;letter-spacing:2px;color:#888;margin-top:2px}
+.footer-dept{font:700 11.5px Oswald,sans-serif;letter-spacing:0.8px;color:#fff}
+.footer-univ{font:600 10px 'DM Sans',sans-serif;letter-spacing:0.5px;color:#bbb;margin-top:1px}
+
+@media(max-width:850px){
+  .quiz-footer{flex-direction:column;text-align:center;gap:14px;padding:20px 16px}
+  .footer-left,.footer-center,.footer-right{align-items:center;text-align:center}
+}

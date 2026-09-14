@@ -524,6 +524,23 @@ function Quiz(p) {
     </>
   );
 }
-function Footer(){return <footer><span>15 SEPTEMBER 2026</span><b>ENGINEERING <i>THE FUTURE.</i></b><span>SCHOOL OF COMPUTER SCIENCE & ENGINEERING</span></footer>}
+function Footer() {
+  return (
+    <footer className="quiz-footer">
+      <div className="footer-col footer-left">
+        <span className="footer-date">📅 15 SEPTEMBER 2026</span>
+        <span className="footer-sub">ENGINEERS’ DAY CELEBRATION</span>
+      </div>
+      <div className="footer-col footer-center">
+        <span className="footer-motto">ENGINEERING <i>THE FUTURE.</i></span>
+        <span className="footer-motto-sub">INNOVATION · TECHNOLOGY · LEADERSHIP</span>
+      </div>
+      <div className="footer-col footer-right">
+        <span className="footer-dept">SCHOOL OF COMPUTER SCIENCE & ENGINEERING</span>
+        <span className="footer-univ">SANDIP UNIVERSITY · UGC & NAAC ‘A’ ACCREDITED</span>
+      </div>
+    </footer>
+  );
+}
 function UploadZone({label,icon,onFile,fileInfo,onClear}) { const [dragOver,setDragOver]=useState(false); const inputRef=useRef(null); const handleDrop=e=>{e.preventDefault();setDragOver(false);const f=e.dataTransfer.files?.[0];if(f&&(f.type==='application/pdf'||f.name.endsWith('.pdf')))onFile(f);else alert('Please upload a PDF file.');}; return <div className={`upload-zone${dragOver?' drag-over':''}${fileInfo?' has-file':''}`} onDrop={handleDrop} onDragOver={e=>{e.preventDefault();setDragOver(true);}} onDragLeave={()=>setDragOver(false)} onClick={()=>!fileInfo&&inputRef.current?.click()}>{fileInfo?<div className="file-info"><span className="file-icon">📄</span><span className="file-name">{fileInfo}</span><button className="file-clear" onClick={e=>{e.stopPropagation();onClear();}}>✕</button></div>:<><div className="upload-icon">{icon}</div><span className="upload-label">{label}</span><small>Drag & drop or click</small></>}<input ref={inputRef} type="file" accept="application/pdf" hidden onChange={e=>{if(e.target.files?.[0])onFile(e.target.files[0]);e.target.value='';}}/></div> }
 createRoot(document.getElementById('root')).render(<App/>);
