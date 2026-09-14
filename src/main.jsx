@@ -278,7 +278,104 @@ function App() {
   const pastePerSet = (text, setName) => { if(!text.trim()) return; const seen=new Set(); const list=parseQuizText(text).filter(item=>{const key=questionKey(item);if(seen.has(key))return false;seen.add(key);return true;}); if(!list.length) return alert('No questions found. Use numbered questions (1. 2.) with A/B/C/D options.'); setPerSetData(all=>({...all,[setName]:{fileName:'Pasted text',questions:list,mode:'all',count:''}})); };
   return <main><div className="ambient grid-left"/><div className="ambient grid-right"/><Header panel={panel} toggle={() => { setTarget(round || target); setPanel(!panel); }}/>{panel && <Operator target={target} setTarget={setTarget} edit={edit} setEdit={setEdit} add={add} load={load} importPdf={importPdf} close={() => setPanel(false)} uploadMode={uploadMode} setUploadMode={setUploadMode} importPerSetPdf={importPerSetPdf} perSetData={perSetData} updatePerSetData={updatePerSetData} applyPerSet={applyPerSet} clearPerSet={clearPerSet} pasteImport={pasteImport} pastePerSet={pastePerSet} resetToDefault={resetToDefault}/>} {pendingImport && <ImportWizard questions={pendingImport} target={target} counts={counts} setCounts={setCounts} apply={finishImport} cancel={()=>setPendingImport(null)}/>} {!round ? <Dashboard rounds={rounds} open={openRound}/> : <Quiz round={round} questions={questions} index={index} current={current} seconds={seconds} running={running} selected={selected} revealed={revealed} questionVisible={questionVisible} autoNextCountdown={autoNextCountdown} completed={completed} nextRound={nextRound} replay={replayCurrentSet} replaySound={() => { stopAllSounds(); if (sound) playCompleteSound(); }} showQuestion={showQuestion} outcome={outcome} sound={sound} back={() => { setRound(null); setCompleted(false); reset(); }} changeRound={openRound} select={selectOption} reset={reset} next={nextQuestion} start={() => setRunning(!running)} setSound={toggleSound}/> }<Footer/></main>;
 }
-function Header({panel,toggle}) { return <header><div className="university"><span className="seal">✦</span><span><b>SANDIP</b> UNIVERSITY<small>UGC Recognised</small></span></div><div className="event-title"><span>ENGINEERS’ DAY</span><strong>2026</strong><small>CELEBRATING INNOVATION · HONORING ENGINEERS · SHAPING TOMORROW</small></div><button className="operator" onClick={toggle}>⚙ <span>OPERATOR<br/>PANEL</span></button></header> }
+function SandipLionLogo({ size = 52 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="sandip-lion-svg">
+      {/* Outer Circle Ring */}
+      <circle cx="50" cy="50" r="47" stroke="#1c1c1c" strokeWidth="2.8" fill="#ffffff" />
+      <circle cx="50" cy="50" r="43.5" stroke="#1c1c1c" strokeWidth="1.2" fill="none" />
+      
+      {/* 28 Radiating Sunburst Rays */}
+      {Array.from({ length: 28 }).map((_, i) => {
+        const angle = (i * 360) / 28;
+        return (
+          <polygon
+            key={i}
+            points="48.5,7 51.5,7 50.8,22 49.2,22"
+            fill="#1c1c1c"
+            transform={`rotate(${angle} 50 50)`}
+          />
+        );
+      })}
+
+      {/* Inner Black Badge Circle */}
+      <circle cx="50" cy="50" r="28" fill="#1c1c1c" stroke="#1c1c1c" strokeWidth="1" />
+
+      {/* Stylized Lion Face */}
+      {/* Ears */}
+      <polygon points="34,35 37,27 42,34" fill="#ffffff" />
+      <polygon points="66,35 63,27 58,34" fill="#ffffff" />
+      <polygon points="36,34 37,29 40,34" fill="#1c1c1c" />
+      <polygon points="64,34 63,29 60,34" fill="#1c1c1c" />
+
+      {/* Forehead / Brow */}
+      <polygon points="37,36 43,32 50,34 57,32 63,36 57,44 50,41 43,44" fill="#ffffff" />
+
+      {/* Nose Bridge */}
+      <polygon points="46,41 50,38 54,41 52.5,51 47.5,51" fill="#ffffff" />
+      <polygon points="41.5,41 44.5,44 39.5,45" fill="#1c1c1c" />
+      <polygon points="58.5,41 55.5,44 60.5,45" fill="#1c1c1c" />
+
+      {/* Cheeks / Mane */}
+      <polygon points="31,43 38,44 36,53 29,49" fill="#ffffff" />
+      <polygon points="69,43 62,44 64,53 71,49" fill="#ffffff" />
+
+      {/* Muzzle & Nose */}
+      <polygon points="45,51 55,51 50,56" fill="#1c1c1c" />
+      <polygon points="42,54 50,52 58,54 55,62 50,65 45,62" fill="#ffffff" />
+      <path d="M 50 56 L 50 61 M 47 60 Q 50 63 53 60" stroke="#1c1c1c" strokeWidth="1.5" strokeLinecap="round" />
+
+      {/* Chin / Beard */}
+      <polygon points="45,65 55,65 50,71" fill="#ffffff" />
+    </svg>
+  );
+}
+
+function SandipBrandLogo() {
+  return (
+    <div className="sandip-brand-container">
+      <SandipLionLogo size={58} />
+      <div className="sandip-text-block">
+        <div className="sandip-title-row">
+          <span className="sandip-name">SANDIP</span>
+          <span className="sandip-sub">UNIVERSITY</span>
+        </div>
+        <div className="sandip-accredit-row">
+          <div className="ugc-badge">
+            <span className="ugc-title">UGC</span>
+            <span className="ugc-sub">Recognised</span>
+          </div>
+          <div className="accredit-divider" />
+          <div className="naac-badge">
+            <span className="naac-label">NAAC<br/>GRADE</span>
+            <span className="naac-grade-circle">A</span>
+          </div>
+        </div>
+        <div className="ugc-section-pill">
+          Under Section 2(f) & 12(B) of UGC
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Header({panel,toggle}) {
+  return (
+    <header>
+      <SandipBrandLogo />
+      <div className="event-title">
+        <div className="event-title-main">
+          <span>ENGINEERS’ DAY</span>
+          <strong>2026</strong>
+        </div>
+        <small>CELEBRATING INNOVATION · HONORING ENGINEERS · SHAPING TOMORROW</small>
+      </div>
+      <button className="operator" onClick={toggle}>
+        ⚙ <span>OPERATOR<br/>PANEL</span>
+      </button>
+    </header>
+  );
+}
 function Operator({target,setTarget,edit,setEdit,add,load,importPdf,close,uploadMode,setUploadMode,importPerSetPdf,perSetData,updatePerSetData,applyPerSet,clearPerSet,pasteImport,pastePerSet,resetToDefault}) { const [singleText,setSingleText]=useState(''); const [perSetTexts,setPerSetTexts]=useState({A:'',B:'',C:'',FINAL:''}); const handleSinglePaste=()=>{if(!singleText.trim())return alert('Please paste questions first.');pasteImport(singleText);setSingleText('');}; const handlePerSetPaste=(name)=>{const text=perSetTexts[name];if(!text||!text.trim())return alert('Please paste questions first.');pastePerSet(text,name);setPerSetTexts(prev=>({...prev,[name]:''}));}; return <aside className="control-panel"><div className="panel-title">UPLOAD QUESTIONS <button onClick={close}>×</button></div><div className="upload-tabs"><button className={`upload-tab ${uploadMode==='single'?'active':''}`} onClick={()=>setUploadMode('single')}>📄 SINGLE PDF</button><button className={`upload-tab ${uploadMode==='perSet'?'active':''}`} onClick={()=>setUploadMode('perSet')}>📑 PER-SET PDFs</button></div>{uploadMode==='single'?<><UploadZone label="Drop your question PDF here" icon="📄" onFile={importPdf}/><div className="upload-divider"><span>OR PASTE QUESTIONS</span></div><textarea className="paste-area" placeholder={"1. What is CPU?\nA) Central Processing Unit\nB) Computer Personal Unit\nC) Central Process Unit\nD) Control Processing Unit\nAnswer: A\n\n2. Next Question..."} value={singleText} onChange={e=>setSingleText(e.target.value)}></textarea><button className="paste-submit-btn" onClick={handleSinglePaste}>📥 IMPORT PASTED QUESTIONS →</button><small>Upload a PDF or paste questions above — previous questions will be replaced.</small><div className="upload-format-hint"><b>SUPPORTED FORMATS</b><small>Numbered questions (1. 2. 3.) with A/B/C/D options and Answer line, or pipe-separated format.</small></div></>:<><div className="per-set-grid">{['A','B','C','FINAL'].map(name=><div className="per-set-item" key={name}><UploadZone label={name==='FINAL'?'FINAL':`SET ${name}`} icon={name==='FINAL'?'★':name} onFile={file=>importPerSetPdf(file,name)} fileInfo={perSetData[name]?.fileName} onClear={()=>clearPerSet(name)}/>{perSetData[name]?<div className="mini-wizard"><span>{perSetData[name].questions.length} questions found</span><div className="mini-wizard-options"><button className={perSetData[name].mode==='all'?'active':''} onClick={()=>updatePerSetData(name,{mode:'all'})}>USE ALL</button><button className={perSetData[name].mode==='custom'?'active':''} onClick={()=>updatePerSetData(name,{mode:'custom'})}>CUSTOM</button></div>{perSetData[name].mode==='custom'&&<input type="number" min="1" max={perSetData[name].questions.length} placeholder={`Max ${perSetData[name].questions.length}`} value={perSetData[name].count} onChange={e=>updatePerSetData(name,{count:e.target.value})}/>}<button className="apply-set" onClick={()=>applyPerSet(name)}>APPLY (RANDOMIZED) →</button></div>:<div className="per-set-paste-box"><textarea className="paste-area paste-area-small" placeholder="Paste questions here..." value={perSetTexts[name]} onChange={e=>setPerSetTexts(prev=>({...prev,[name]:e.target.value}))}></textarea><button className="paste-submit-btn-small" onClick={()=>handlePerSetPaste(name)}>📥 IMPORT TO {name==='FINAL'?'FINAL':`SET ${name}`}</button></div>}</div>)}</div><small>Upload a PDF or paste questions for each set to replace that set's questions.</small></>}<div className="reset-section"><button className="reset-default-btn" onClick={resetToDefault}>🗑️ RESET ALL TO DEFAULT QUESTIONS</button></div></aside> }
 function ImportWizard({questions,target,counts,setCounts,apply,cancel}) { const [selectedSet,setSelectedSet]=useState(target||'A'); const [randomize,setRandomize]=useState(true); const total=Object.values(counts).reduce((sum,value)=>sum+Number(value||0),0); return <div className="import-overlay"><section className="import-wizard"><button className="wizard-close" onClick={cancel}>×</button><span className="wizard-kicker">QUESTIONS READY TO IMPORT</span><h2>{questions.length} UNIQUE QUESTIONS FOUND</h2><p className="wizard-copy">Choose how to assign these questions. Questions will be randomly picked so <b>no question repeats</b> in any set.</p><label className="wizard-shuffle-toggle"><input type="checkbox" checked={randomize} onChange={e=>setRandomize(e.target.checked)}/> <span>🔀 <b>Randomize & Shuffle question order</b> (Non-repeating across all sets)</span></label><div className="import-actions"><button className="import-choice primary" onClick={()=>apply('equal',null,randomize)}><b>⚖</b><span>DIVIDE EQUALLY<small>Distribute randomly across A, B, C & Final (~{Math.floor(questions.length/4)} each)</small></span></button><button className="import-choice" onClick={()=>apply('all_sets',null,randomize)}><b>★</b><span>COPY TO ALL SETS<small>Put all {questions.length} questions into every set</small></span></button></div><div className="single-set-picker"><div className="picker-header"><b>🎯 OR PUT ALL INTO ONE SPECIFIC SET</b><small>Click any set below to load all {questions.length} questions into it:</small></div><div className="set-buttons-row">{['A','B','C','FINAL'].map(name=><button key={name} className="set-select-btn" onClick={()=>{setSelectedSet(name);apply('selected',name,randomize);}}><b>{name==='FINAL'?'★':name}</b><span>{name==='FINAL'?'FINAL ROUND':`SET ${name}`}</span></button>)}</div></div><div className="custom-distribution"><div><b>🔢 CUSTOM DISTRIBUTION (ZERO DUPLICATES)</b><small>Each set will receive a unique, non-repeating random selection from the pool</small></div><div className="count-inputs">{['A','B','C','FINAL'].map(name=><label key={name}>{name==='FINAL'?'FINAL':`SET ${name}`}<input type="number" min="0" max={questions.length} placeholder="0" value={counts[name]} onChange={e=>setCounts({...counts,[name]:e.target.value})}/></label>)}</div><div className="count-footer"><span>{total} / {questions.length} questions assigned</span><button onClick={()=>apply('custom',null,randomize)}>APPLY RANDOM COUNTS →</button></div></div></section></div> }
 function Dashboard({rounds,open}) { return <><section className="dashboard-heading"><span>TECH QUIZ · OPERATOR DASHBOARD</span><h1>CHOOSE A ROUND TO BEGIN</h1><p>Open one set, then show its questions one at a time.</p></section><section className="set-dashboard">{['A','B','C','FINAL'].map((r,i)=><article className="set-card" key={r}><div className="set-number">{r==='FINAL'?'★':`0${i+1}`}</div><span>{r==='FINAL'?'CHAMPIONSHIP':'ENGINEERING DAY'}</span><h2>{r==='FINAL'?'FINAL ROUND':`SET ${r}`}</h2><p>{rounds[r].length} question{rounds[r].length!==1?'s':''} ready</p><button onClick={()=>open(r)}>OPEN {r==='FINAL'?'FINAL':`SET ${r}`} →</button></article>)}</section></> }
