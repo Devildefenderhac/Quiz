@@ -51,6 +51,40 @@ function stopQuestionSound() {
     }
   } catch {}
 }
+let timerAudio = null;
+function getTimerAudio() {
+  if (!timerAudio && typeof Audio !== 'undefined') {
+    timerAudio = new Audio('/timer.mpeg');
+    timerAudio.preload = 'auto';
+    timerAudio.loop = true;
+  }
+  return timerAudio;
+}
+function playTimerSound() {
+  try {
+    const a = getTimerAudio();
+    if (a && a.paused) {
+      a.play().catch(() => {});
+    }
+  } catch {}
+}
+function pauseTimerSound() {
+  try {
+    const a = getTimerAudio();
+    if (a && !a.paused) {
+      a.pause();
+    }
+  } catch {}
+}
+function stopTimerSound() {
+  try {
+    const a = getTimerAudio();
+    if (a) {
+      a.pause();
+      a.currentTime = 0;
+    }
+  } catch {}
+}
 function tone(kind) { try { const a = new AudioContext(), o = a.createOscillator(), g = a.createGain(); o.type = kind === 'correct' ? 'sine' : 'sawtooth'; o.frequency.value = kind === 'correct' ? 620 : 160; g.gain.value = .08; o.connect(g).connect(a.destination); o.start(); o.stop(a.currentTime + .45); } catch {} }
 function parseQuizText(text) { const lines=text.split(/\r?\n/); const pipes=lines.filter(Boolean).map(x=>x.split('|').map(y=>y.trim())).filter(x=>x.length>=6); if(pipes.length) return pipes.map(x=>q(x[0],x.slice(1,5),Math.max(0,letters.indexOf(x[5].toUpperCase())))); const res=[]; let c=null; for(const raw of lines){ const line=raw.trim(); if(!line) continue; let m; m=line.match(/^Q?\s*(\d+)\s*[.):-]\s*(.{4,})/i); if(m&&!/^[A-Da-d]\s*[).]/.test(line)){ if(c&&c.options.some(Boolean)) res.push(c); c={question:m[2],options:['','','',''],answer:0}; continue; } m=line.match(/(?:answer|ans)\s*[.:]\s*([A-Da-d])/i); if(m&&c){ c.answer=Math.max(0,'ABCD'.indexOf(m[1].toUpperCase())); continue; } m=line.match(/^\(?([A-Da-d])\s*[.):-]\s*(.+)/); if(m&&c){ const i='ABCD'.indexOf(m[1].toUpperCase()); if(i>=0) c.options[i]=m[2].trim(); continue; } } if(c&&c.options.some(Boolean)) res.push(c); return res.map(x=>q(x.question,x.options,x.answer)); }
 
@@ -59,12 +93,12 @@ function App() {
   const [indexes, setIndexes] = useState({ A: 0, B: 0, C: 0, FINAL: 0 }); const [seconds, setSeconds] = useState(60); const [running, setRunning] = useState(false); const [selected, setSelected] = useState(null); const [revealed, setRevealed] = useState(false); const [questionVisible, setQuestionVisible] = useState(false); const [autoNextCountdown, setAutoNextCountdown] = useState(null); const [sound, setSound] = useState(true); const [panel, setPanel] = useState(false); const [target, setTarget] = useState('A'); const [edit, setEdit] = useState(blank()); const [pendingImport, setPendingImport] = useState(null); const [counts, setCounts] = useState({ A: '', B: '', C: '', FINAL: '' });
   const [uploadMode, setUploadMode] = useState('single'); const [perSetData, setPerSetData] = useState({ A: null, B: null, C: null, FINAL: null });
   const questions = round ? rounds[round] : []; const index = round ? indexes[round] : 0; const current = questions[index] || blank();
-  const reset = () => { setSeconds(60); setRunning(false); setSelected(null); setRevealed(false); setQuestionVisible(false); setAutoNextCountdown(null); stopQuestionSound(); };
+  const reset = () => { setSeconds(60); setRunning(false); setSelected(null); setRevealed(false); setQuestionVisible(false); setAutoNextCountdown(null); stopQuestionSound(); stopTimerSound(); };
   const openRound = key => { setRound(key); setTarget(key); setPanel(false); reset(); };
   const showQuestion = () => { setQuestionVisible(true); setSeconds(60); setRunning(true); setSelected(null); setRevealed(false); setAutoNextCountdown(null); if (sound) playQuestionSound(); };
-  const nextQuestion = () => { if (!questions.length) return; stopQuestionSound(); setIndexes(all => ({ ...all, [round]: (all[round] + 1) % questions.length })); reset(); };
-  const selectOption = n => { if (!revealed) { setSelected(n); setRevealed(true); setRunning(false); stopQuestionSound(); if (sound) tone(n === current.answer ? 'correct' : 'wrong'); setAutoNextCountdown(10); } };
-  const toggleSound = () => { if (sound) stopQuestionSound(); setSound(!sound); };
+  const nextQuestion = () => { if (!questions.length) return; stopQuestionSound(); stopTimerSound(); setIndexes(all => ({ ...all, [round]: (all[round] + 1) % questions.length })); reset(); };
+  const selectOption = n => { if (!revealed) { setSelected(n); setRevealed(true); setRunning(false); stopQuestionSound(); stopTimerSound(); if (sound) tone(n === current.answer ? 'correct' : 'wrong'); setAutoNextCountdown(10); } };
+  const toggleSound = () => { if (sound) { stopQuestionSound(); stopTimerSound(); } setSound(!sound); };
   const resetToDefault = () => {
     if (window.confirm('Reset all questions to default starter questions? Any custom uploaded questions will be deleted.')) {
       try { localStorage.removeItem(STORAGE_KEY); } catch {}
@@ -80,8 +114,16 @@ function App() {
     } catch {}
   }, [rounds]);
   useEffect(() => { if (!running || revealed || seconds <= 0) return; const id = setInterval(() => setSeconds(s => s - 1), 1000); return () => clearInterval(id); }, [running, revealed, seconds]);
-  useEffect(() => { if (seconds === 0 && questionVisible && !revealed) { setRunning(false); setRevealed(true); stopQuestionSound(); if (sound) tone('wrong'); setAutoNextCountdown(10); } }, [seconds, sound, questionVisible, revealed]);
+  useEffect(() => {
+    if (running && questionVisible && !revealed && seconds > 0 && sound) {
+      playTimerSound();
+    } else {
+      pauseTimerSound();
+    }
+  }, [running, questionVisible, revealed, seconds, sound]);
+  useEffect(() => { if (seconds === 0 && questionVisible && !revealed) { setRunning(false); setRevealed(true); stopQuestionSound(); stopTimerSound(); if (sound) tone('wrong'); setAutoNextCountdown(10); } }, [seconds, sound, questionVisible, revealed]);
   useEffect(() => { if (autoNextCountdown === null) return; if (autoNextCountdown <= 0) { nextQuestion(); return; } const id = setTimeout(() => { setAutoNextCountdown(c => (c !== null ? c - 1 : null)); }, 1000); return () => clearTimeout(id); }, [autoNextCountdown]);
+
   const outcome = useMemo(() => { if (!revealed) return ''; if (selected === null) return 'timeup'; return selected === current.answer ? 'correct' : 'wrong'; }, [revealed, selected, current.answer]);
   const questionKey = question => question.question.trim().toLowerCase().replace(/\s+/g, ' ');
   const add = () => { if (!edit.question.trim() || edit.options.some(x => !x.trim())) return; const key = questionKey(edit); if (Object.values(rounds).flat().some(item => questionKey(item) === key)) return alert('This question already exists in another set.'); setRounds(all => ({ ...all, [target]: [...all[target], { ...edit, options: [...edit.options] }] })); setEdit(blank()); };
