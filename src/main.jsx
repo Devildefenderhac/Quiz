@@ -334,7 +334,7 @@ function SandipLionLogo({ size = 52 }) {
 function SandipBrandLogo() {
   return (
     <div className="sandip-brand-container">
-      <SandipLionLogo size={58} />
+      <SandipLionLogo size={74} />
       <div className="sandip-text-block">
         <div className="sandip-title-row">
           <span className="sandip-name">SANDIP</span>
@@ -351,8 +351,11 @@ function SandipBrandLogo() {
             <span className="naac-grade-circle">A</span>
           </div>
         </div>
-        <div className="ugc-section-pill">
+        <div className="ugc-black-box">
           Under Section 2(f) & 12(B) of UGC
+        </div>
+        <div className="maharashtra-subtext">
+          ESTABLISHED UNDER GOVT. OF MAHARASHTRA ACT. NO. XXXVIII OF 2015
         </div>
       </div>
     </div>
